@@ -1,6 +1,3 @@
-# Created by https://www.toptal.com/developers/gitignore/api/zig,macos
-# Edit at https://www.toptal.com/developers/gitignore?templates=zig,macos
-
 ### macOS ###
 # General
 .DS_Store
@@ -42,5 +39,3 @@ zig-out/
 build/
 build-*/
 docgen_tmp/
-
-# End of https://www.toptal.com/developers/gitignore/api/zig,macos
