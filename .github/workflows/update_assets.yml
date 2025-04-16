@@ -26,15 +26,18 @@ jobs:
 
       - name: Update CSVs
         run: python scripts/update_assets.py
-
       - name: Commit & push (only if data changed)
         run: |
+          set -e
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if ! git diff --quiet; then
-            git add data/*.csv
-            git commit -m "chore(data): market close $(date -u +'%Y-%m-%d')"
-            git push
-          else
-            echo "Nothing new to commit"
 
+          # Exit early if nothing changed
+          if git diff --quiet; then
+            echo "Nothing new to commit"
+            exit 0
+          fi
+
+          git add data/*.csv
+          git commit -m "chore(data): market close $(date -u +'%Y-%m-%d')"
+          git push
