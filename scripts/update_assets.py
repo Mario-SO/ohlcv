@@ -1,39 +1,62 @@
 #!/usr/bin/env python
 """
-Fetch yesterday's daily OHLCV for several tickers and append
-to per‑asset CSVs in ./data. First run creates full history.
-"""
-import pathlib, pandas as pd, yfinance as yf
+update_assets.py
+----------------
+Fetch OHLCV for several tickers from Yahoo Finance (via yfinance).
 
+• If the asset’s CSV does *not* exist, pull the entire history ("max").
+• Otherwise, pull just the last two days and append the new bar.
+• Creates ./data if missing and keeps each asset in its own CSV.
+
+Edit the TICKERS dict to add/remove symbols.
+"""
+
+import pathlib
+import pandas as pd
+import yfinance as yf
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Config – add more assets here if you like
+# ────────────────────────────────────────────────────────────────────────────────
 TICKERS = {
-    "btc":   "BTC-USD",
-    "eth":   "ETH-USD",
-    "gold":  "GC=F",
-    "sp500": "^GSPC",
+    "btc":   "BTC-USD",   # Bitcoin
+    "eth":   "ETH-USD",   # Ethereum
+    "gold":  "GC=F",      # COMEX continuous gold future
+    "sp500": "^GSPC",     # S&P 500 index
 }
 
 DATA_DIR = pathlib.Path("data")
-DATA_DIR.mkdir(exist_ok=True)
+DATA_DIR.mkdir(exist_ok=True)  # Ensure ./data exists
 
+# ────────────────────────────────────────────────────────────────────────────────
+# Main loop
+# ────────────────────────────────────────────────────────────────────────────────
 for name, yf_symbol in TICKERS.items():
-    fn = DATA_DIR / f"{name}.csv"
+    csv_path = DATA_DIR / f"{name}.csv"
+
+    # Pull full history if first run, else just the last two days
+    period = "max" if not csv_path.exists() else "2d"
+
     df_new = (
         yf.Ticker(yf_symbol)
-        .history(period="2d")            # yesterday+today to be safe
-        [["Open","High","Low","Close","Volume"]]
+        .history(period=period)
+        [["Open", "High", "Low", "Close", "Volume"]]
     )
-    df_new.index = df_new.index.tz_localize(None)  # drop TZ
+
+    # yfinance returns timezone‑aware index; drop TZ so it plays nicely with CSV
+    df_new.index = df_new.index.tz_localize(None)
     df_new.index.name = "Date"
 
-    if fn.exists():
-        df_old = pd.read_csv(fn, parse_dates=["Date"], index_col="Date")
+    if csv_path.exists():
+        df_old = pd.read_csv(csv_path, parse_dates=["Date"], index_col="Date")
+        # Keep only genuinely new rows (in case of reruns or weekends)
         df_new = df_new[~df_new.index.isin(df_old.index)]
         if df_new.empty:
+            print(f"{name}: up‑to‑date")
             continue
-        out = pd.concat([df_old, df_new])
+        combined = pd.concat([df_old, df_new])
     else:
-        out = df_new
+        combined = df_new
 
-    out.to_csv(fn, float_format="%.8f")
-    print(f"{name}: wrote {len(df_new)} new rows")
-
+    combined.to_csv(csv_path, float_format="%.8f")
+    print(f"{name}: wrote {len(df_new)} new rows (total {len(combined)})")
