@@ -4,6 +4,7 @@ const std = @import("std");
 const Row = @import("../types/row.zig").Row;
 const ParseError = @import("../types/errors.zig").ParseError;
 const FetchError = @import("../types/errors.zig").FetchError;
+const parser = @import("../parser/parser.zig");
 
 // ┌──────────────────────────── DataSet ────────────────────────────┐
 
@@ -37,7 +38,7 @@ pub fn fetch(ds: DataSet, alloc: std.mem.Allocator) FetchError![]Row {
     _ = response;
 
     var stream = std.io.fixedBufferStream(response_body.items);
-    return @import("../parser/parser.zig").parseCsvFast(alloc, stream.reader()) catch |e| return e;
+    return parser.parseCsvFast(alloc, stream.reader()) catch |e| return e;
 }
 
 // └──────────────────────────────────────────────────────────────┘
