@@ -112,9 +112,9 @@ pub fn main() !void {
 ├── lib/              # Library source code
 │   ├── ohlcv.zig     # Public API (root source file)
 │   ├── parser/
-│   │   ├── parser.zig      # Main parser functions
-│   │   ├── state_machine.zig # Internal state machine for parseCsvFast
-│   │   └── parser.test.zig # Tests for parser
+│   │   ├── parser.zig          # Main parser functions
+│   │   ├── state_machine.zig   # Internal state machine for parseCsvFast
+│   │   └── parser.test.zig     # Tests for parser
 │   ├── provider/
 │   │   ├── provider.zig
 │   │   └── provider.test.zig
