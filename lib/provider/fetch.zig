@@ -1,5 +1,5 @@
 const std = @import("std");
-const parseAll = @import("../parse/entry.zig").parseAll;
+const machineParser = @import("../parse/entry.zig").machineParser;
 const Row = @import("../core/row.zig").Row;
 
 pub const DataSet = enum { btc_usd, sp500, eth_usd, gold_usd };
@@ -28,5 +28,5 @@ pub fn fetch(ds: DataSet, alloc: std.mem.Allocator) ![]Row {
 
     // const body = try response.reader().readAllAlloc(alloc, 1 << 26); // Old way, erroring
     var stream = std.io.fixedBufferStream(response_body.items);
-    return try parseAll(alloc, stream.reader());
+    return try machineParser(alloc, stream.reader());
 }

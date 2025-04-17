@@ -17,11 +17,11 @@ pub fn main() !void {
     // Process the 'rows' slice...
     for (rows) |row| {
         // Access row data: row.ts, row.o, row.h, row.l, row.c, row.v
-        print("Row: {d:.2}\n", .{row.ts});
-        print("Open: {d:.2}\n", .{row.o});
-        print("High: {d:.2}\n", .{row.h});
-        print("Low: {d:.2}\n", .{row.l});
-        print("Close: {d:.2}\n", .{row.c});
+        print("Row: {d} ", .{row.ts});
+        print("Open: {d:.2} ", .{row.o});
+        print("High: {d:.2} ", .{row.h});
+        print("Low: {d:.2} ", .{row.l});
+        print("Close: {d:.2} ", .{row.c});
         print("Volume: {d}\n", .{row.v});
     }
 }
