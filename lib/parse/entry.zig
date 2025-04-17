@@ -1,82 +1,10 @@
 const std = @import("std");
 const print = std.debug.print;
-const Row = @import("../core/row.zig").Row;
-const state = @import("state.zig");
+const Row = @import("../types.zig").Row;
 const fmt = std.fmt;
 const mem = std.mem;
-const time = std.time;
-
-// Define custom errors for parsing
-const ParseError = error{
-    InvalidFormat, // General format error (e.g., wrong number of fields)
-    InvalidTimestamp,
-    InvalidOpen,
-    InvalidHigh,
-    InvalidLow,
-    InvalidClose,
-    InvalidVolume,
-    InvalidDateFormat, // Added for custom date parsing
-    DateBeforeEpoch, // Specific error for pre-1970 dates
-};
-
-// Helper to check for leap year
-fn isLeap(year: u16) bool {
-    return (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0);
-}
-
-// Helper to get days in month
-const days_in_month = [_]u8{ 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-
-// Custom function to parse "YYYY-MM-DD" to Unix Timestamp (seconds since epoch)
-// WARNING: Basic implementation, assumes UTC, no timezone handling.
-fn parseDateToUnixTimestamp(date_str: []const u8) !u64 {
-    if (date_str.len != 10 or date_str[4] != '-' or date_str[7] != '-') {
-        return ParseError.InvalidDateFormat;
-    }
-
-    const year: u16 = fmt.parseUnsigned(u16, date_str[0..4], 10) catch return ParseError.InvalidDateFormat;
-    const month: u8 = fmt.parseUnsigned(u8, date_str[5..7], 10) catch return ParseError.InvalidDateFormat;
-    const day: u8 = fmt.parseUnsigned(u8, date_str[8..10], 10) catch return ParseError.InvalidDateFormat;
-
-    if (year < 1970) {
-        return ParseError.DateBeforeEpoch; // Return specific error
-    }
-    if (month == 0 or month > 12 or day == 0) {
-        return ParseError.InvalidDateFormat; // Basic validation
-    }
-
-    var days_since_epoch: u64 = 0;
-
-    // Add days for full years since epoch
-    var y: u16 = 1970;
-    while (y < year) : (y += 1) {
-        days_since_epoch += if (isLeap(y)) 366 else 365;
-    }
-
-    // Add days for full months in the current year
-    var m: u8 = 1;
-    while (m < month) : (m += 1) {
-        days_since_epoch += days_in_month[m];
-        if (m == 2 and isLeap(year)) {
-            days_since_epoch += 1; // Add leap day
-        }
-    }
-
-    // Add days in the current month
-    days_since_epoch += @as(u64, day) - 1;
-
-    // Validate day for month
-    var max_day_in_month = days_in_month[month];
-    if (month == 2 and isLeap(year)) {
-        max_day_in_month += 1;
-    }
-    if (day > max_day_in_month) {
-        return ParseError.InvalidDateFormat;
-    }
-
-    const seconds_per_day: u64 = 24 * 60 * 60;
-    return days_since_epoch * seconds_per_day;
-}
+const date_util = @import("../util/date.zig");
+const ParseError = @import("../errors.zig").ParseError;
 
 // Helper function to parse a single line into a Row
 fn parseLineToRow(line: []const u8) !Row {
@@ -92,9 +20,10 @@ fn parseLineToRow(line: []const u8) !Row {
 
     // Parse Timestamp (YYYY-MM-DD)
     const ts_str = try nextField(&fields);
-    row.ts = parseDateToUnixTimestamp(ts_str) catch |err| switch (err) {
-        error.DateBeforeEpoch => return err, // Propagate specific error to caller
-        else => return ParseError.InvalidTimestamp, // Map other errors
+    row.ts = date_util.yyyymmddToUnix(ts_str) catch |err| switch (err) {
+        date_util.DateError.DateBeforeEpoch => return ParseError.DateBeforeEpoch,
+        date_util.DateError.InvalidFormat => return ParseError.InvalidDateFormat,
+        else => return ParseError.InvalidTimestamp,
     };
 
     row.o = fmt.parseFloat(f64, try nextField(&fields)) catch |parse_err| {
@@ -123,11 +52,15 @@ fn parseLineToRow(line: []const u8) !Row {
         return ParseError.InvalidFormat;
     }
 
+    if (row.o == 0.0 or row.h == 0.0 or row.l == 0.0 or row.c == 0.0 or row.v == 0) {
+        return ParseError.InvalidFormat;
+    }
+
     return row;
 }
 
 // Parses all rows using std.mem.splitScalar (simpler, line-by-line)
-pub fn parseAll(alloc: std.mem.Allocator, reader: anytype) ![]Row {
+pub fn parseCsv(alloc: std.mem.Allocator, reader: anytype) ![]Row {
     var rows = std.ArrayList(Row).init(alloc);
     errdefer rows.deinit(); // Ensure cleanup on error
 
@@ -159,7 +92,7 @@ pub fn parseAll(alloc: std.mem.Allocator, reader: anytype) ![]Row {
             if (err == error.DateBeforeEpoch) {
                 // Optional: print("Skipping pre-1970 date line: {s}\n", .{line});
             } else {
-                print("Skipping invalid line (parseAll): {s} - Error: {any}\n", .{ line, err });
+                print("Skipping invalid line (parseCsv): {s} - Error: {any}\n", .{ line, err });
             }
             line_buffer.clearRetainingCapacity();
             continue;
@@ -173,7 +106,7 @@ pub fn parseAll(alloc: std.mem.Allocator, reader: anytype) ![]Row {
 }
 
 // Parses all rows using a byte-level state machine for field extraction
-pub fn machineParser(alloc: std.mem.Allocator, reader: anytype) ![]Row {
+pub fn parseCsvFast(alloc: std.mem.Allocator, reader: anytype) ![]Row {
     var rows = std.ArrayList(Row).init(alloc);
     errdefer rows.deinit();
 
@@ -195,8 +128,8 @@ pub fn machineParser(alloc: std.mem.Allocator, reader: anytype) ![]Row {
                     switch (field_index) {
                         0 => {
                             // print("DEBUG: Parsing date field: '{s}'\n", .{field_bytes});
-                            current_row.ts = parseDateToUnixTimestamp(field_bytes) catch |err| switch (err) {
-                                error.DateBeforeEpoch => {
+                            current_row.ts = date_util.yyyymmddToUnix(field_bytes) catch |err| switch (err) {
+                                date_util.DateError.DateBeforeEpoch => {
                                     // Date is pre-1970. Skip the rest of this line.
                                     // Optional: print("Skipping pre-1970 date row starting with: {s}\n", .{field_bytes});
                                     while (reader.readByte()) |byte_to_skip| {
@@ -210,10 +143,8 @@ pub fn machineParser(alloc: std.mem.Allocator, reader: anytype) ![]Row {
                                     field_buffer.clearRetainingCapacity();
                                     continue; // Continue the main while loop (skips rest of current row logic)
                                 },
-                                else => {
-                                    print("State Machine: Timestamp parsing error on '{s}': {any}\n", .{ field_bytes, err });
-                                    return error.InvalidTimestamp;
-                                },
+                                date_util.DateError.InvalidFormat => return ParseError.InvalidDateFormat,
+                                // No else needed: all cases handled
                             };
                         },
                         1 => {
@@ -274,7 +205,9 @@ pub fn machineParser(alloc: std.mem.Allocator, reader: anytype) ![]Row {
                     }
 
                     if (!is_header) {
-                        try rows.append(current_row);
+                        if (!(current_row.o == 0.0 or current_row.h == 0.0 or current_row.l == 0.0 or current_row.c == 0.0 or current_row.v == 0)) {
+                            try rows.append(current_row);
+                        }
                     } else {
                         is_header = false; // Finished header row
                     }
@@ -313,7 +246,9 @@ pub fn machineParser(alloc: std.mem.Allocator, reader: anytype) ![]Row {
         // If field_index reached 6, the date was already validated (not pre-1970)
         // in the main loop's date parsing step.
         if (!is_header and field_index == 6) {
-            try rows.append(current_row);
+            if (!(current_row.o == 0.0 or current_row.h == 0.0 or current_row.l == 0.0 or current_row.c == 0.0 or current_row.v == 0)) {
+                try rows.append(current_row);
+            }
         } else if (!is_header and field_index != 0) {
             // Don't append incomplete rows at EOF unless it's just an empty line
             if (field_index != 1 or field_buffer.items.len > 0) {

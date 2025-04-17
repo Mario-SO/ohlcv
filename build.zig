@@ -6,7 +6,7 @@ pub fn build(b: *std.Build) void {
 
     // ─── Library module ───
     const mod = b.addModule("ohlcv", .{
-        .root_source_file = b.path("lib/lib.zig"),
+        .root_source_file = b.path("lib/ohlcv.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -30,7 +30,7 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("ohlcv", mod);
     b.installArtifact(exe);
 
-    // ─── “zig build run” convenience step ───
+    // ─── "zig build run" convenience step ───
     const run_cmd = b.addRunArtifact(exe);
     // Pipe any args from the command line: `zig build run -- arg1 arg2`
     if (b.args) |user_args| run_cmd.addArgs(user_args);

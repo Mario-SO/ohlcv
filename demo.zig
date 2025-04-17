@@ -1,7 +1,6 @@
 const std = @import("std");
 const print = std.debug.print;
-
-const ohlcv = @import("ohlcv");
+const ohlcv = @import("lib/ohlcv.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -14,14 +13,9 @@ pub fn main() !void {
 
     std.debug.print("Fetched {d} rows of data.\n", .{rows.len});
 
-    // Process the 'rows' slice...
-    for (rows) |row| {
-        // Access row data: row.ts, row.o, row.h, row.l, row.c, row.v
-        print("Row: {d} ", .{row.ts});
-        print("Open: {d:.2} ", .{row.o});
-        print("High: {d:.2} ", .{row.h});
-        print("Low: {d:.2} ", .{row.l});
-        print("Close: {d:.2} ", .{row.c});
-        print("Volume: {d}\n", .{row.v});
+    // Print the first 5 rows as a sample
+    const count = if (rows.len < 5) rows.len else 5;
+    for (rows[0..count], 0..) |row, i| {
+        std.debug.print("Row {d}: ts={d}, o={d:.2}, h={d:.2}, l={d:.2}, c={d:.2}, v={d}\n", .{ i, row.ts, row.o, row.h, row.l, row.c, row.v });
     }
 }
