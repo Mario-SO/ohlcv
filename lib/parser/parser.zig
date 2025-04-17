@@ -1,9 +1,9 @@
 const std = @import("std");
 const print = std.debug.print;
-const Row = @import("../core.zig").Row;
+const Row = @import("../types/row.zig").Row;
 const fmt = std.fmt;
 const mem = std.mem;
-const date_util = @import("../../utils/date.zig");
+const date_util = @import("../util/date.zig");
 const ParseError = @import("../types/errors.zig").ParseError;
 
 // Helper function to parser a single line into a Row

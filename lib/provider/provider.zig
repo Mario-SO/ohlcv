@@ -1,7 +1,7 @@
 // ╔══════════════════════════════════════ Fetch (Provider) ══════════════════════════════════════╗
 
 const std = @import("std");
-const Row = @import("../core.zig").Row;
+const Row = @import("../types/row.zig").Row;
 const ParseError = @import("../types/errors.zig").ParseError;
 const FetchError = @import("../types/errors.zig").FetchError;
 

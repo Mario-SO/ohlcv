@@ -110,13 +110,20 @@ pub fn main() !void {
 ├── build.zig.zon     # Package manifest
 ├── demo.zig          # Example usage executable
 ├── lib/              # Library source code
-│   ├── ohlcv.zig     # Barrel: public API (import this)
-│   ├── types.zig     # Row, Bar
-│   ├── errors.zig    # Error types
-│   ├── fetch.zig     # DataSet, fetch()
-│   ├── parser.zig     # Parsing API
-│   ├── util/         # Internal helpers (date)
-│   └── parser/        # Internal parsing logic
+│   ├── ohlcv.zig     # Public API (root source file)
+│   ├── parser/
+│   │   ├── parser.zig
+│   │   └── parser.test.zig
+│   ├── provider/
+│   │   ├── provider.zig
+│   │   └── provider.test.zig
+│   ├── types/
+│   │   ├── bar.zig
+│   │   ├── errors.zig
+│   │   └── row.zig
+│   └── util/
+│       ├── date.zig
+│       └── date.test.zig
 └── README.md         # This file
 ```
 
