@@ -43,7 +43,7 @@ pub fn main() !void {
     defer std.debug.assert(gpa.deinit() == .ok);
     const alloc = gpa.allocator();
 
-    // Fetch S&P 500 data (network + parse)
+    // Fetch S&P 500 data (network + parser)
     const rows = try ohlcv.fetch(.sp500, alloc);
     defer alloc.free(rows);
 
@@ -88,7 +88,7 @@ pub fn main() !void {
 
 ### Functions
 
-- `fetch(ds: DataSet, alloc: Allocator) FetchError![]Row` — Fetch and parse remote CSV
+- `fetch(ds: DataSet, alloc: Allocator) FetchError![]Row` — Fetch and parser remote CSV
 - `parseCsv(alloc, reader) ![]Row` — Parse CSV from any reader (default parser)
 - `parseCsvFast(alloc, reader) ![]Row` — Fast state-machine parser
 - `parseFileCsv(alloc, path) ![]Row` — Parse CSV from file
@@ -114,9 +114,9 @@ pub fn main() !void {
 │   ├── types.zig     # Row, Bar
 │   ├── errors.zig    # Error types
 │   ├── fetch.zig     # DataSet, fetch()
-│   ├── parse.zig     # Parsing API
+│   ├── parser.zig     # Parsing API
 │   ├── util/         # Internal helpers (date)
-│   └── parse/        # Internal parsing logic
+│   └── parser/        # Internal parsing logic
 └── README.md         # This file
 ```
 
@@ -126,7 +126,7 @@ pub fn main() !void {
 
 - The parser **skips**:
   - The header row
-  - Rows with invalid format or parse errors
+  - Rows with invalid format or parser errors
   - Rows with pre-1970 dates
   - Rows where any of the OHLCV values are zero
 - This means the number of parsed rows may be less than the number of lines in the CSV file.
@@ -135,7 +135,7 @@ pub fn main() !void {
 
 ## 🧩 Extending & Contributing
 
-- Add new formats: add new parse functions in `parse.zig`
+- Add new formats: add new parser functions in `parser.zig`
 - PRs and issues welcome!
 
 ---

@@ -1,9 +1,9 @@
 // ╔══════════════════════════════════════ Fetch (Provider) ══════════════════════════════════════╗
 
 const std = @import("std");
-const Row = @import("types.zig").Row;
-const ParseError = @import("errors.zig").ParseError;
-const FetchError = @import("errors.zig").FetchError;
+const Row = @import("../core.zig").Row;
+const ParseError = @import("../types/errors.zig").ParseError;
+const FetchError = @import("../types/errors.zig").FetchError;
 
 // ┌──────────────────────────── DataSet ────────────────────────────┐
 
@@ -37,7 +37,7 @@ pub fn fetch(ds: DataSet, alloc: std.mem.Allocator) FetchError![]Row {
     _ = response;
 
     var stream = std.io.fixedBufferStream(response_body.items);
-    return @import("parse.zig").parseCsvFast(alloc, stream.reader()) catch |e| return e;
+    return @import("../parser/parser.zig").parseCsvFast(alloc, stream.reader()) catch |e| return e;
 }
 
 // └──────────────────────────────────────────────────────────────┘

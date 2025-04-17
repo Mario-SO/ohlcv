@@ -1,12 +1,12 @@
 const std = @import("std");
 const print = std.debug.print;
-const Row = @import("../types.zig").Row;
+const Row = @import("../core.zig").Row;
 const fmt = std.fmt;
 const mem = std.mem;
-const date_util = @import("../util/date.zig");
-const ParseError = @import("../errors.zig").ParseError;
+const date_util = @import("../../utils/date.zig");
+const ParseError = @import("../types/errors.zig").ParseError;
 
-// Helper function to parse a single line into a Row
+// Helper function to parser a single line into a Row
 fn parseLineToRow(line: []const u8) !Row {
     var fields = mem.splitScalar(u8, line, ',');
     var row: Row = undefined;
@@ -18,7 +18,7 @@ fn parseLineToRow(line: []const u8) !Row {
         }
     }.get;
 
-    // Parse Timestamp (YYYY-MM-DD)
+    // Parser Timestamp (YYYY-MM-DD)
     const ts_str = try nextField(&fields);
     row.ts = date_util.yyyymmddToUnix(ts_str) catch |err| switch (err) {
         date_util.DateError.DateBeforeEpoch => return ParseError.DateBeforeEpoch,
@@ -74,7 +74,7 @@ pub fn parseCsv(alloc: std.mem.Allocator, reader: anytype) ![]Row {
     };
     line_buffer.clearRetainingCapacity(); // Reuse buffer
 
-    // Read and parse data lines
+    // Read and parser data lines
     while (true) {
         reader.streamUntilDelimiter(line_buffer.writer(), '\n', null) catch |err| switch (err) {
             error.EndOfStream => break, // Normal end of file

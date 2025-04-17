@@ -1,33 +1,25 @@
 // ╔══════════════════════════════════════ OHLCV Public API ══════════════════════════════════════╗
 
-// ┌──────────────────────────── Types ────────────────────────────┐
+// ┌──────────────────────────── Types ─────────────────────────────┐
 
-pub const Row = @import("types.zig").Row;
-pub const Bar = @import("types.zig").Bar;
+pub const Row = @import("core/types/row.zig").Row;
+pub const Bar = @import("core/types/bar.zig").Bar;
 
-// └──────────────────────────────────────────────────────────────┘
+// └────────────────────────────────────────────────────────────────┘
 
-// ┌──────────────────────────── Errors ──────────────────────────┐
+// ┌─────────────────────────── Provider ───────────────────────────┐
 
-pub const ParseError = @import("errors.zig").ParseError;
-pub const FetchError = @import("errors.zig").FetchError;
+pub const fetch = @import("core/provider/provider.zig").fetch;
 
-// └──────────────────────────────────────────────────────────────┘
+// └────────────────────────────────────────────────────────────────┘
 
-// ┌──────────────────────────── DataSet & Fetch ────────────────────────────┐
+// ┌──────────────────────────── Parser ────────────────────────────┐
 
-pub const DataSet = @import("fetch.zig").DataSet;
-pub const fetch = @import("fetch.zig").fetch;
+pub const ParseError = @import("core/types/errors.zig").ParseError;
+pub const FetchError = @import("core/types/errors.zig").FetchError;
+pub const parseCsv = @import("core/parser/parser.zig").parseCsv;
+pub const parseCsvFast = @import("core/parser/parser.zig").parseCsvFast;
 
-// └─────────────────────────────────────────────────────────────────────────┘
-
-// ┌──────────────────────────── Parsing ────────────────────────────┐
-
-pub const parseCsv = @import("parse.zig").parseCsv;
-pub const parseCsvFast = @import("parse.zig").parseCsvFast;
-pub const parseFileCsv = @import("parse.zig").parseFileCsv;
-pub const parseStringCsv = @import("parse.zig").parseStringCsv;
-
-// └─────────────────────────────────────────────────────────────────┘
+// └────────────────────────────────────────────────────────────────┘
 
 // ╚══════════════════════════════════════════════════════════════════════════════════════════════╝
