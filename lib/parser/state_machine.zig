@@ -47,6 +47,7 @@ pub const StateMachineParser = struct {
                                 self.is_skipping_current_line = true;
                             },
                             date_util.DateError.InvalidFormat => return ParseError.InvalidDateFormat,
+                            date_util.DateError.InvalidDateRange => return ParseError.InvalidDateFormat,
                         }
                     }
                     if (self.is_skipping_current_line) {
