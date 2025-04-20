@@ -1,67 +1,162 @@
-// File: demo.zig (or examples/demo.zig)
 const std = @import("std");
-const ohlcv = @import("lib/ohlcv.zig"); // Adjust path based on your project structure
+const ohlcv = @import("lib/ohlcv.zig");
 
-pub fn main() !void {
-    // 1. Initialize allocator
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit(); // Ensure allocator is cleaned up
-    const allocator = gpa.allocator();
-
-    // 2. Define parameters
-    const from_date = "2023-01-01";
-    const to_date = "2023-12-31"; // Fetch data for the year 2023
-    const sma_period: u32 = 365; // Calculate 200-day SMA
-    const dataset = ohlcv.DataSet.btc_usd; // Use Bitcoin data
-
-    const stdout_writer = std.io.getStdOut().writer();
-
-    try stdout_writer.print("Fetching {s} data from {s} to {s} and calculating {d}-day SMA...\n", .{
-        @tagName(dataset), // Get string name of enum
+// Function to run the SMA calculation and handle errors
+fn runSmaCalculation(
+    allocator: std.mem.Allocator,
+    writer: anytype, // Use anytype for flexibility (e.g., stdout, file writer)
+    from_date: []const u8,
+    to_date: []const u8,
+    options: ohlcv.indicators.SmaOptions,
+    dataset: ohlcv.DataSet,
+) !?[]ohlcv.Bar { // Returns optional slice, or an error if printing fails
+    try writer.print("\nFetching {s} data from {s} to {s} and calculating {d}-day SMA...\n", .{
+        @tagName(dataset),
         from_date,
         to_date,
-        sma_period,
+        options.period,
     });
 
-    // 3. Call the SMA function
-    const sma_results = ohlcv.ma.smaForDateRange(
+    const results = ohlcv.indicators.calculateSMAForRange(
         from_date,
         to_date,
-        sma_period,
+        options,
         dataset,
         allocator,
     ) catch |err| {
-        // Handle potential errors from fetching or calculation
-        try stdout_writer.print("Error calculating SMA: {any}\n", .{err});
-        // Example specific error handling:
-        if (err == ohlcv.ma.MAError.InsufficientData) {
-            try stdout_writer.print("Not enough data points in the range for the specified period.\n", .{});
+        // Handle errors directly within this function
+        try writer.print("Error calculating SMA: {any}\n", .{err});
+        if (err == ohlcv.indicators.SMAError.InsufficientData) {
+            try writer.print("Not enough data points in the range for the specified period.\n", .{});
         } else if (err == ohlcv.FetchError.HttpError) {
-            try stdout_writer.print("Failed to download data. Check internet connection or URL.\n", .{});
+            try writer.print("Failed to download data. Check internet connection or URL.\n", .{});
+        } else if (err == ohlcv.indicators.SMAError.InvalidParameters) {
+            try writer.print("Invalid parameters for SMA (e.g., period=0).\n", .{});
         }
-        return; // Exit if error occurred
+        // Return null to indicate an error occurred and was handled
+        return null;
     };
 
-    // IMPORTANT: Free the memory allocated for the results
-    defer allocator.free(sma_results);
+    // Return the successfully calculated results
+    return results;
+}
 
-    // 4. Print the results (e.g., the last 5 SMA values)
-    if (sma_results.len == 0) {
-        try stdout_writer.print("No SMA results generated (maybe insufficient data).\n", .{});
+// Function to print the SMA results table
+fn printSmaResultsTable(
+    writer: anytype,
+    results: []const ohlcv.Bar,
+    options: ohlcv.indicators.SmaOptions,
+) !void {
+    if (results.len == 0) {
+        try writer.print("No SMA results generated (check period vs date range).\n", .{});
     } else {
-        try stdout_writer.print("\nLast 5 SMA ({d}-day) values:\n", .{sma_period});
-        try stdout_writer.print("Timestamp         | SMA Value\n", .{});
-        try stdout_writer.print("------------------|-----------\n", .{});
+        try writer.print("\nLast 5 SMA ({d}-day) values:\n", .{options.period});
+        try writer.print("Timestamp         | SMA Value\n", .{});
+        try writer.print("------------------|-----------\n", .{});
 
-        const start_index = if (sma_results.len > 5) sma_results.len - 5 else 0;
-        for (sma_results[start_index..]) |sma_bar| {
-            // Format timestamp (assuming UTC YYYY-MM-DD) - requires helper or complex formatting
-            // For simplicity, just printing the Unix timestamp here.
-            // You would typically convert sma_bar.ts back to YYYY-MM-DD for display.
-            try stdout_writer.print("{d:17} | {d:.2}\n", .{
-                sma_bar.ts, // Unix timestamp
+        const start_index = if (results.len > 5) results.len - 5 else 0;
+        for (results[start_index..]) |sma_bar| {
+            try writer.print("{d:17} | {d:.2}\n", .{
+                sma_bar.ts,
                 sma_bar.c, // SMA value stored in 'c'
             });
         }
+    }
+}
+
+// Function to run the EMA calculation and handle errors
+fn runEmaCalculation(
+    allocator: std.mem.Allocator,
+    writer: anytype,
+    from_date: []const u8,
+    to_date: []const u8,
+    options: ohlcv.indicators.EmaOptions, // Use EmaOptions
+    dataset: ohlcv.DataSet,
+) !?[]ohlcv.Bar {
+    try writer.print("\nFetching {s} data from {s} to {s} and calculating {d}-period EMA...\n", .{ // Added newline & EMA text
+        @tagName(dataset),
+        from_date,
+        to_date,
+        options.period,
+    });
+
+    // Assume calculateEMAForRange exists and follows a similar pattern
+    const results = ohlcv.indicators.calculateEMAForRange(
+        from_date,
+        to_date,
+        options, // Pass EmaOptions
+        dataset,
+        allocator,
+    ) catch |err| {
+        try writer.print("Error calculating EMA: {any}\n", .{err});
+        // Adjust error handling for potential EMA-specific errors
+        if (err == ohlcv.indicators.EMAError.InsufficientData) { // Assume EMAError exists
+            try writer.print("Not enough data points in the range for the specified period.\n", .{});
+        } else if (err == ohlcv.FetchError.HttpError) {
+            try writer.print("Failed to download data. Check internet connection or URL.\n", .{});
+        } else if (err == ohlcv.indicators.EMAError.InvalidParameters) { // Assume EMAError exists
+            try writer.print("Invalid parameters for EMA (e.g., period=0).\n", .{});
+        }
+        return null;
+    };
+
+    return results;
+}
+
+// Function to print the EMA results table
+fn printEmaResultsTable(
+    writer: anytype,
+    results: []const ohlcv.Bar,
+    options: ohlcv.indicators.EmaOptions, // Use EmaOptions
+) !void {
+    if (results.len == 0) {
+        try writer.print("No EMA results generated (check period vs date range).\n", .{});
+    } else {
+        try writer.print("\nLast 5 EMA ({d}-period) values:\n", .{options.period}); // Changed SMA to EMA
+        try writer.print("Timestamp         | EMA Value\n", .{}); // Changed SMA to EMA
+        try writer.print("------------------|-----------\n", .{});
+
+        const start_index = if (results.len > 5) results.len - 5 else 0;
+        for (results[start_index..]) |ema_bar| { // Renamed loop variable
+            try writer.print("{d:17} | {d:.2}\n", .{
+                ema_bar.ts,
+                ema_bar.c, // Assuming EMA value is also stored in 'c'
+            });
+        }
+    }
+}
+
+pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
+    // Configuration
+    const from_date = "2023-01-01";
+    const to_date = "2023-12-31";
+    const sma_options = ohlcv.indicators.SmaOptions{ .period = 200 }; // Example: 200-day SMA
+    const dataset = ohlcv.DataSet.btc_usd;
+
+    const stdout_writer = std.io.getStdOut().writer();
+
+    // Run calculation and handle potential printing errors from runSmaCalculation
+    if (try runSmaCalculation(allocator, stdout_writer, from_date, to_date, sma_options, dataset)) |sma_results| {
+        // If calculation succeeded (returned non-null), defer freeing and print results
+        defer allocator.free(sma_results);
+        try printSmaResultsTable(stdout_writer, sma_results, sma_options);
+    } else {
+        // If runSmaCalculation returned null, it means an error occurred
+        // and was already printed. We can just exit cleanly or add more logging here.
+        // std.log.info("SMA calculation failed, see error message above.", .{});
+    }
+
+    // --- Run EMA ---
+    // Configure EMA options (example: 12-period EMA)
+    const ema_options = ohlcv.indicators.EmaOptions{ .period = 12 }; // REVERTED PATH
+    if (try runEmaCalculation(allocator, stdout_writer, from_date, to_date, ema_options, dataset)) |ema_results| {
+        defer allocator.free(ema_results); // Free EMA results memory
+        try printEmaResultsTable(stdout_writer, ema_results, ema_options); // Print EMA table
+    } else {
+        // Error already printed in runEmaCalculation
     }
 }

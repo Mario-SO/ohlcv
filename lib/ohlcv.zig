@@ -25,7 +25,7 @@ pub const parseCsvFast = @import("parser/parser.zig").parseCsvFast;
 
 // ┌──────────────────────────── Indicators ────────────────────────────┐
 
-pub const ma = @import("indicators/ma.zig");
+pub const indicators = @import("indicators/indicators.zig");
 
 // └────────────────────────────────────────────────────────────────────┘
 
