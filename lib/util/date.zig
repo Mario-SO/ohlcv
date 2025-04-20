@@ -3,8 +3,6 @@
 const std = @import("std");
 const fmt = std.fmt;
 const Row = @import("../types/row.zig").Row;
-const DataSet = @import("../provider/provider.zig").DataSet;
-const fetch = @import("../provider/provider.zig").fetch;
 const FetchError = @import("../types/errors.zig").FetchError;
 
 // ┌──────────────────────────── Errors ────────────────────────────┐
@@ -13,10 +11,11 @@ const FetchError = @import("../types/errors.zig").FetchError;
 pub const DateError = error{
     InvalidFormat,
     DateBeforeEpoch,
+    InvalidDateRange,
 };
 
-// Define an error set for this function, combining possible errors.
-pub const GetRowsError = DateError || FetchError || error{OutOfMemory};
+// Define an error set for filtering, only includes allocation errors.
+pub const FilterError = error{OutOfMemory};
 
 // └────────────────────────────────────────────────────────────────┘
 
@@ -72,54 +71,40 @@ pub fn yyyymmddToUnix(date_str: []const u8) DateError!u64 {
 
 // └────────────────────────────────────────────────────────────────────────┘
 
-// ┌──────────────────────────── yyyymmddToUnix ────────────────────────────┐
+// ┌────────────────────────── filterRowsByTimestamp ───────────────────────────┐
 
-/// Get rows from a specific data set within a given date range (inclusive).
-/// Dates `from` and `to` should be in "YYYY-MM-DD" format.
-pub fn getRowsFromDates(
-    from_str: []const u8,
-    to_str: []const u8,
-    ds: DataSet,
+/// Filters a slice of `Row` data based on a given Unix timestamp range [from_ts, to_ts_inclusive].
+/// Returns a new allocated slice containing only the rows within the range.
+pub fn filterRowsByTimestamp(
+    all_rows: []const Row, // Input: Slice of all rows
+    from_ts: u64, // Input: Start timestamp (inclusive)
+    to_ts_inclusive: u64, // Input: End timestamp (inclusive)
     alloc: std.mem.Allocator,
-) GetRowsError![]Row {
-    // 1. Parse the start and end date strings into Unix timestamps.
-    const from_ts = try yyyymmddToUnix(from_str);
-    const to_ts = try yyyymmddToUnix(to_str);
-
+) FilterError![]Row {
     // Calculate the timestamp for the start of the day *after* the 'to' date.
-    // This is used to create an inclusive range check: [from_ts, to_ts_next_day).
     const seconds_in_day: u64 = 24 * 60 * 60;
-    const to_ts_next_day = to_ts + seconds_in_day;
+    // We check < to_ts_next_day to include the whole 'to_ts_inclusive' day.
+    const to_ts_next_day = to_ts_inclusive + seconds_in_day;
 
     // Basic check: ensure 'from' is not after 'to'.
     if (from_ts >= to_ts_next_day) {
         // Return an empty slice if the date range is invalid or empty.
-        // Alternatively, could return an error like `error.InvalidDateRange`.
         return alloc.alloc(Row, 0) catch return error.OutOfMemory;
     }
 
-    // 2. Fetch all rows for the given dataset.
-    const all_rows = try fetch(ds, alloc);
-    // Ensure the memory allocated by fetch is freed when this function returns.
-    defer alloc.free(all_rows);
-
-    // 3. Filter the rows based on the date range.
+    // Filter the rows based on the timestamp range.
     var filtered_list = std.ArrayList(Row).init(alloc);
-    // Ensure the list is deinitialized if an error occurs during appending.
     errdefer filtered_list.deinit();
 
     for (all_rows) |row| {
         if (row.ts >= from_ts and row.ts < to_ts_next_day) {
-            // Append the row if it's within the date range.
-            // This might fail if allocation fails (OutOfMemory).
             try filtered_list.append(row);
         }
     }
 
-    // 4. Return the filtered rows as a slice.
-    // toOwnedSlice transfers ownership, so no need to deinit list afterwards on success.
+    // Return the filtered rows as a slice.
     return filtered_list.toOwnedSlice();
 }
 
-// └─────────────────────────────────────────────────────────────────────────┘
+// └──────────────────────────────────────────────────────────────────────────┘
 // ╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
