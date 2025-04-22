@@ -9,6 +9,7 @@ A modern Zig library for fetching and parsing Open-High-Low-Close-Volume (OHLCV)
 - **Fetch remote OHLCV data** for BTC, S&P 500, ETH, and Gold (from GitHub)
 - **Fast, robust CSV parsing** (handles headers, skips invalid/zero rows)
 - **Simple, ergonomic API** (single import, clear types)
+- **Technical Indicators**: Includes implementations for SMA and EMA, easily extensible.
 - **Memory safe**: all allocations are explicit, easy to free
 - **Extensible**: add new data sources or formats easily
 
@@ -25,10 +26,7 @@ A modern Zig library for fetching and parsing Open-High-Low-Close-Volume (OHLCV)
    zig build run
    ```
    The demo fetches S&P 500 data and prints a sample of parsed rows.
-3. **Run unit tests:**
-   ```sh
-   zig build test
-   ```
+
 
 ---
 
@@ -109,6 +107,7 @@ pub fn main() !void {
 ├── build.zig         # Build script
 ├── build.zig.zon     # Package manifest
 ├── demo.zig          # Example usage executable
+├── INDICATORS.md     # List and status of technical indicators
 ├── lib/              # Library source code
 │   ├── ohlcv.zig     # Public API (root source file)
 │   ├── parser/
@@ -122,6 +121,9 @@ pub fn main() !void {
 │   │   ├── bar.zig
 │   │   ├── errors.zig
 │   │   └── row.zig
+│   ├── indicators/
+│   │   ├── indicators.zig # Indicator functions (SMA, EMA)
+│   │   └── *.zig          # Individual indicator implementations
 │   └── util/
 │       ├── date.zig
 │       └── date.test.zig
@@ -151,6 +153,7 @@ pub fn main() !void {
 ## 📚 See Also
 
 - [demo.zig](demo.zig) — Full example usage
+- [INDICATORS.md](INDICATORS.md) — List of implemented and planned technical indicators
 - [lib/ohlcv.zig](lib/ohlcv.zig) — Public API
 
 ---
