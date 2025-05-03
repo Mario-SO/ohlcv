@@ -126,6 +126,64 @@ fn printEmaResultsTable(
     }
 }
 
+fn runRsiCalculation(
+    allocator: std.mem.Allocator,
+    writer: anytype,
+    from_date: []const u8,
+    to_date: []const u8,
+    options: ohlcv.indicators.RsiOptions,
+    dataset: ohlcv.DataSet,
+) !?[]ohlcv.Bar {
+    try writer.print("\nFetching {s} data from {s} to {s} and calculating {d}-period RSI...\n", .{
+        @tagName(dataset),
+        from_date,
+        to_date,
+        options.period,
+    });
+
+    const results = ohlcv.indicators.calculateRSIForRange(
+        from_date,
+        to_date,
+        options,
+        dataset,
+        allocator,
+    ) catch |err| {
+        try writer.print("Error calculating RSI: {any}\n", .{err});
+        if (err == ohlcv.indicators.RSIError.InsufficientData) {
+            try writer.print("Not enough data points in the range for the specified period.\n", .{});
+        } else if (err == ohlcv.FetchError.HttpError) {
+            try writer.print("Failed to download data. Check internet connection or URL.\n", .{});
+        } else if (err == ohlcv.indicators.RSIError.InvalidParameters) {
+            try writer.print("Invalid parameters for RSI (e.g., period=0).\n", .{});
+        }
+        return null;
+    };
+
+    return results;
+}
+
+fn printRsiResultsTable(
+    writer: anytype,
+    results: []const ohlcv.Bar,
+    options: ohlcv.indicators.RsiOptions,
+) !void {
+    if (results.len == 0) {
+        try writer.print("No RSI results generated (check period vs date range).\n", .{});
+    } else {
+        try writer.print("\nLast 5 RSI ({d}-period) values:\n", .{options.period});
+        try writer.print("Timestamp         | RSI Value\n", .{});
+        try writer.print("------------------|-----------\n", .{});
+
+        const start_index = if (results.len > 5) results.len - 5 else 0;
+        for (results[start_index..]) |rsi_bar| {
+            try writer.print("{d:17} | {d:.2}\n", .{
+                rsi_bar.ts,
+                rsi_bar.c,
+            });
+        }
+    }
+}
+
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
@@ -158,5 +216,14 @@ pub fn main() !void {
         try printEmaResultsTable(stdout_writer, ema_results, ema_options); // Print EMA table
     } else {
         // Error already printed in runEmaCalculation
+    }
+
+    // --- Run RSI ---
+    const rsi_options = ohlcv.indicators.RsiOptions{ .period = 14 }; // Default RSI period
+    if (try runRsiCalculation(allocator, stdout_writer, from_date, to_date, rsi_options, dataset)) |rsi_results| {
+        defer allocator.free(rsi_results); // Free RSI results memory
+        try printRsiResultsTable(stdout_writer, rsi_results, rsi_options); // Print RSI table
+    } else {
+        // Error already printed in runRsiCalculation
     }
 }
