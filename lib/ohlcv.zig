@@ -1,32 +1,72 @@
-// ╔══════════════════════════════════════ OHLCV Public API ══════════════════════════════════════╗
+// ╔══════════════════════════════════════ OHLCV Library v2.0 ══════════════════════════════════════╗
 
-// ┌──────────────────────────── Types ─────────────────────────────┐
+const std = @import("std");
 
-pub const Row = @import("types/row.zig").Row;
-pub const Bar = @import("types/bar.zig").Bar;
+// ┌──────────────────────────── Core Types ─────────────────────────────┐
+
+pub const OhlcvRow = @import("types/ohlcv_row.zig").OhlcvRow;
+pub const OhlcBar = @import("types/ohlc_bar.zig").OhlcBar;
+
+// Legacy compatibility
+pub const Row = OhlcvRow;
+pub const Bar = OhlcBar;
 
 // └────────────────────────────────────────────────────────────────┘
 
-// ┌─────────────────────────── Provider ───────────────────────────┐
+// ┌──────────────────────────── Data Sources ─────────────────────────────┐
 
-pub const DataSet = @import("provider/provider.zig").DataSet;
-pub const fetch = @import("provider/provider.zig").fetch;
+pub const DataSource = @import("data_source/data_source.zig").DataSource;
+pub const HttpDataSource = @import("data_source/http_data_source.zig").HttpDataSource;
+pub const FileDataSource = @import("data_source/file_data_source.zig").FileDataSource;
+pub const MemoryDataSource = @import("data_source/memory_data_source.zig").MemoryDataSource;
+
+// └────────────────────────────────────────────────────────────────┘
+
+// ┌──────────────────────────── Time Series ─────────────────────────────┐
+
+pub const TimeSeries = @import("time_series.zig").TimeSeries;
 
 // └────────────────────────────────────────────────────────────────┘
 
 // ┌──────────────────────────── Parser ────────────────────────────┐
 
-pub const ParseError = @import("types/errors.zig").ParseError;
-pub const FetchError = @import("types/errors.zig").FetchError;
-pub const parseCsv = @import("parser/parser.zig").parseCsv;
-pub const parseCsvFast = @import("parser/parser.zig").parseCsvFast;
+pub const CsvParser = @import("parser/csv_parser.zig").CsvParser;
+pub const ParseError = @import("parser/csv_parser.zig").ParseError;
 
 // └────────────────────────────────────────────────────────────────┘
 
 // ┌──────────────────────────── Indicators ────────────────────────────┐
 
-pub const indicators = @import("indicators/indicators.zig");
+pub const IndicatorResult = @import("indicators/indicator_result.zig").IndicatorResult;
+pub const SmaIndicator = @import("indicators/sma_indicator.zig").SmaIndicator;
+pub const EmaIndicator = @import("indicators/ema_indicator.zig").EmaIndicator;
+pub const RsiIndicator = @import("indicators/rsi_indicator.zig").RsiIndicator;
 
 // └────────────────────────────────────────────────────────────────────┘
 
-// ╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+// ┌──────────────────────────── Convenience Functions ─────────────────────────────┐
+
+/// Quick fetch and parse from predefined sources
+pub const PresetSource = enum { btc_usd, sp500, eth_usd, gold_usd };
+
+pub fn fetchPreset(source: PresetSource, allocator: std.mem.Allocator) !TimeSeries {
+    const url = switch (source) {
+        .btc_usd => "https://raw.githubusercontent.com/Mario-SO/ohlcv/refs/heads/main/data/btc.csv",
+        .sp500 => "https://raw.githubusercontent.com/Mario-SO/ohlcv/refs/heads/main/data/sp500.csv",
+        .eth_usd => "https://raw.githubusercontent.com/Mario-SO/ohlcv/refs/heads/main/data/eth.csv",
+        .gold_usd => "https://raw.githubusercontent.com/Mario-SO/ohlcv/refs/heads/main/data/gold.csv",
+    };
+    
+    var http_source = try HttpDataSource.init(allocator, url);
+    defer http_source.dataSource().deinit();
+    
+    const data = try http_source.dataSource().fetch(allocator);
+    defer allocator.free(data);
+    
+    const parser = CsvParser{ .allocator = allocator };
+    return try parser.parse(data);
+}
+
+// └────────────────────────────────────────────────────────────────────┘
+
+// ╚══════════════════════════════════════════════════════════════════════════════════════════════════╝

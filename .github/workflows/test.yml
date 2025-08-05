@@ -1,0 +1,66 @@
+# ╔══════════════════════════════════════ Test Workflow ══════════════════════════════════════╗
+
+name: Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        zig-version: [0.14.1]
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: ${{ matrix.zig-version }}
+      
+      - name: Show Zig version
+        run: zig version
+      
+      - name: Run tests
+        run: zig build test
+      
+      - name: Build library
+        run: zig build
+      
+      - name: Run demo
+        run: |
+          zig build run | head -100
+        if: matrix.os != 'windows-latest'
+      
+      - name: Run demo (Windows)
+        run: |
+          zig build run | Select-Object -First 100
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.14.1
+      
+      - name: Format check
+        run: zig fmt --check .
+
+# ╚════════════════════════════════════════════════════════════════════════════════════════════╝

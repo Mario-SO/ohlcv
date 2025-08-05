@@ -13,10 +13,17 @@ pub fn build(b: *std.Build) void {
 
     // ─── Unit‑tests (compile + run) ───
     const tst_obj = b.addTest(.{
-        .root_source_file = mod.root_source_file,
+        .root_source_file = b.path("test/test_all.zig"),
         .target = target,
         .optimize = optimize,
     });
+    tst_obj.root_module.addImport("ohlcv", mod);
+    tst_obj.root_module.addImport("test_helpers", b.createModule(.{
+        .root_source_file = b.path("test/test_helpers.zig"),
+        .imports = &.{
+            .{ .name = "ohlcv", .module = mod },
+        },
+    }));
     const tst_run = b.addRunArtifact(tst_obj);
     b.step("test", "Run unit tests").dependOn(&tst_run.step);
 

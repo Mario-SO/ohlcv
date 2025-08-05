@@ -1,229 +1,198 @@
+// ╔══════════════════════════════════════ OHLCV Demo Application ══════════════════════════════════════╗
+
 const std = @import("std");
 const ohlcv = @import("lib/ohlcv.zig");
 
-// Function to run the SMA calculation and handle errors
-fn runSmaCalculation(
-    allocator: std.mem.Allocator,
-    writer: anytype, // Use anytype for flexibility (e.g., stdout, file writer)
-    from_date: []const u8,
-    to_date: []const u8,
-    options: ohlcv.indicators.SmaOptions,
-    dataset: ohlcv.DataSet,
-) !?[]ohlcv.Bar { // Returns optional slice, or an error if printing fails
-    try writer.print("\nFetching {s} data from {s} to {s} and calculating {d}-day SMA...\n", .{
+/// Demo configuration
+const Config = struct {
+    str_from_date: []const u8 = "2023-01-01",
+    str_to_date: []const u8 = "2023-12-31",
+    u32_sma_period: u32 = 200,
+    u32_ema_period: u32 = 12,
+    u32_rsi_period: u32 = 14,
+};
+
+/// Run analysis on a dataset
+fn runAnalysis(allocator: std.mem.Allocator, writer: anytype, dataset: ohlcv.PresetSource, config: Config) !void {
+    try writer.print("\n══════════════════════════════════════════\n", .{});
+    try writer.print("Analyzing {s} from {s} to {s}\n", .{
         @tagName(dataset),
-        from_date,
-        to_date,
-        options.period,
+        config.str_from_date,
+        config.str_to_date,
     });
+    try writer.print("══════════════════════════════════════════\n\n", .{});
+    
+    // Fetch and parse data
+    try writer.print("Fetching data...\n", .{});
+    var series = try ohlcv.fetchPreset(dataset, allocator);
+    defer series.deinit();
+    
+    try writer.print("Total rows: {d}\n", .{series.len()});
+    
+    // Filter by date range
+    const from_ts = try parseDate(config.str_from_date);
+    const to_ts = try parseDate(config.str_to_date);
+    
+    var filtered = try series.sliceByTime(from_ts, to_ts);
+    defer filtered.deinit();
+    
+    try writer.print("Rows in date range: {d}\n\n", .{filtered.len()});
+    
+    // Calculate indicators
+    try calculateAndPrintSMA(&filtered, allocator, writer, config.u32_sma_period);
+    try calculateAndPrintEMA(&filtered, allocator, writer, config.u32_ema_period);
+    try calculateAndPrintRSI(&filtered, allocator, writer, config.u32_rsi_period);
+}
 
-    const results = ohlcv.indicators.calculateSMAForRange(
-        from_date,
-        to_date,
-        options,
-        dataset,
-        allocator,
-    ) catch |err| {
-        // Handle errors directly within this function
-        try writer.print("Error calculating SMA: {any}\n", .{err});
-        if (err == ohlcv.indicators.SMAError.InsufficientData) {
-            try writer.print("Not enough data points in the range for the specified period.\n", .{});
-        } else if (err == ohlcv.FetchError.HttpError) {
-            try writer.print("Failed to download data. Check internet connection or URL.\n", .{});
-        } else if (err == ohlcv.indicators.SMAError.InvalidParameters) {
-            try writer.print("Invalid parameters for SMA (e.g., period=0).\n", .{});
-        }
-        // Return null to indicate an error occurred and was handled
-        return null;
+/// Calculate and print SMA results
+fn calculateAndPrintSMA(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype, period: u32) !void {
+    const sma = ohlcv.SmaIndicator{ .u32_period = period };
+    
+    var result = sma.calculate(series.*, allocator) catch |err| {
+        try writer.print("SMA({d}) Error: {any}\n\n", .{ period, err });
+        return;
     };
-
-    // Return the successfully calculated results
-    return results;
+    defer result.deinit();
+    
+    try writer.print("SMA({d}) Results:\n", .{period});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printLastValues(&result, writer, 5);
 }
 
-// Function to print the SMA results table
-fn printSmaResultsTable(
-    writer: anytype,
-    results: []const ohlcv.Bar,
-    options: ohlcv.indicators.SmaOptions,
-) !void {
-    if (results.len == 0) {
-        try writer.print("No SMA results generated (check period vs date range).\n", .{});
-    } else {
-        try writer.print("\nLast 5 SMA ({d}-day) values:\n", .{options.period});
-        try writer.print("Timestamp         | SMA Value\n", .{});
-        try writer.print("------------------|-----------\n", .{});
-
-        const start_index = if (results.len > 5) results.len - 5 else 0;
-        for (results[start_index..]) |sma_bar| {
-            try writer.print("{d:17} | {d:.2}\n", .{
-                sma_bar.ts,
-                sma_bar.c, // SMA value stored in 'c'
-            });
-        }
-    }
-}
-
-// Function to run the EMA calculation and handle errors
-fn runEmaCalculation(
-    allocator: std.mem.Allocator,
-    writer: anytype,
-    from_date: []const u8,
-    to_date: []const u8,
-    options: ohlcv.indicators.EmaOptions, // Use EmaOptions
-    dataset: ohlcv.DataSet,
-) !?[]ohlcv.Bar {
-    try writer.print("\nFetching {s} data from {s} to {s} and calculating {d}-period EMA...\n", .{ // Added newline & EMA text
-        @tagName(dataset),
-        from_date,
-        to_date,
-        options.period,
-    });
-
-    // Assume calculateEMAForRange exists and follows a similar pattern
-    const results = ohlcv.indicators.calculateEMAForRange(
-        from_date,
-        to_date,
-        options, // Pass EmaOptions
-        dataset,
-        allocator,
-    ) catch |err| {
-        try writer.print("Error calculating EMA: {any}\n", .{err});
-        // Adjust error handling for potential EMA-specific errors
-        if (err == ohlcv.indicators.EMAError.InsufficientData) { // Assume EMAError exists
-            try writer.print("Not enough data points in the range for the specified period.\n", .{});
-        } else if (err == ohlcv.FetchError.HttpError) {
-            try writer.print("Failed to download data. Check internet connection or URL.\n", .{});
-        } else if (err == ohlcv.indicators.EMAError.InvalidParameters) { // Assume EMAError exists
-            try writer.print("Invalid parameters for EMA (e.g., period=0).\n", .{});
-        }
-        return null;
+/// Calculate and print EMA results
+fn calculateAndPrintEMA(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype, period: u32) !void {
+    const ema = ohlcv.EmaIndicator{ .u32_period = period };
+    
+    var result = ema.calculate(series.*, allocator) catch |err| {
+        try writer.print("EMA({d}) Error: {any}\n\n", .{ period, err });
+        return;
     };
-
-    return results;
+    defer result.deinit();
+    
+    try writer.print("EMA({d}) Results:\n", .{period});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printLastValues(&result, writer, 5);
 }
 
-// Function to print the EMA results table
-fn printEmaResultsTable(
-    writer: anytype,
-    results: []const ohlcv.Bar,
-    options: ohlcv.indicators.EmaOptions, // Use EmaOptions
-) !void {
-    if (results.len == 0) {
-        try writer.print("No EMA results generated (check period vs date range).\n", .{});
-    } else {
-        try writer.print("\nLast 5 EMA ({d}-period) values:\n", .{options.period}); // Changed SMA to EMA
-        try writer.print("Timestamp         | EMA Value\n", .{}); // Changed SMA to EMA
-        try writer.print("------------------|-----------\n", .{});
-
-        const start_index = if (results.len > 5) results.len - 5 else 0;
-        for (results[start_index..]) |ema_bar| { // Renamed loop variable
-            try writer.print("{d:17} | {d:.2}\n", .{
-                ema_bar.ts,
-                ema_bar.c, // Assuming EMA value is also stored in 'c'
-            });
-        }
-    }
-}
-
-fn runRsiCalculation(
-    allocator: std.mem.Allocator,
-    writer: anytype,
-    from_date: []const u8,
-    to_date: []const u8,
-    options: ohlcv.indicators.RsiOptions,
-    dataset: ohlcv.DataSet,
-) !?[]ohlcv.Bar {
-    try writer.print("\nFetching {s} data from {s} to {s} and calculating {d}-period RSI...\n", .{
-        @tagName(dataset),
-        from_date,
-        to_date,
-        options.period,
-    });
-
-    const results = ohlcv.indicators.calculateRSIForRange(
-        from_date,
-        to_date,
-        options,
-        dataset,
-        allocator,
-    ) catch |err| {
-        try writer.print("Error calculating RSI: {any}\n", .{err});
-        if (err == ohlcv.indicators.RSIError.InsufficientData) {
-            try writer.print("Not enough data points in the range for the specified period.\n", .{});
-        } else if (err == ohlcv.FetchError.HttpError) {
-            try writer.print("Failed to download data. Check internet connection or URL.\n", .{});
-        } else if (err == ohlcv.indicators.RSIError.InvalidParameters) {
-            try writer.print("Invalid parameters for RSI (e.g., period=0).\n", .{});
-        }
-        return null;
+/// Calculate and print RSI results
+fn calculateAndPrintRSI(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype, period: u32) !void {
+    const rsi = ohlcv.RsiIndicator{ .u32_period = period };
+    
+    var result = rsi.calculate(series.*, allocator) catch |err| {
+        try writer.print("RSI({d}) Error: {any}\n\n", .{ period, err });
+        return;
     };
-
-    return results;
+    defer result.deinit();
+    
+    try writer.print("RSI({d}) Results:\n", .{period});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printLastValues(&result, writer, 5);
 }
 
-fn printRsiResultsTable(
-    writer: anytype,
-    results: []const ohlcv.Bar,
-    options: ohlcv.indicators.RsiOptions,
-) !void {
-    if (results.len == 0) {
-        try writer.print("No RSI results generated (check period vs date range).\n", .{});
-    } else {
-        try writer.print("\nLast 5 RSI ({d}-period) values:\n", .{options.period});
-        try writer.print("Timestamp         | RSI Value\n", .{});
-        try writer.print("------------------|-----------\n", .{});
-
-        const start_index = if (results.len > 5) results.len - 5 else 0;
-        for (results[start_index..]) |rsi_bar| {
-            try writer.print("{d:17} | {d:.2}\n", .{
-                rsi_bar.ts,
-                rsi_bar.c,
-            });
-        }
+/// Print last N values from indicator result
+fn printLastValues(result: *const ohlcv.IndicatorResult, writer: anytype, n: usize) !void {
+    const start = if (result.len() > n) result.len() - n else 0;
+    const end = result.len();
+    
+    try writer.print("Timestamp         | Value\n", .{});
+    try writer.print("──────────────────┼────────\n", .{});
+    
+    var i = start;
+    while (i < end) : (i += 1) {
+        try writer.print("{d:17} │ {d:.2}\n", .{
+            result.arr_timestamps[i],
+            result.arr_values[i],
+        });
     }
+    try writer.print("\n", .{});
+}
+
+/// Parse date string to Unix timestamp
+fn parseDate(date_str: []const u8) !u64 {
+    if (date_str.len != 10 or date_str[4] != '-' or date_str[7] != '-') {
+        return error.InvalidDateFormat;
+    }
+    
+    const year = try std.fmt.parseInt(u16, date_str[0..4], 10);
+    const month = try std.fmt.parseInt(u8, date_str[5..7], 10);
+    const day = try std.fmt.parseInt(u8, date_str[8..10], 10);
+    
+    // Simple date to timestamp conversion
+    var days: u64 = 0;
+    
+    // Add years
+    var y: u16 = 1970;
+    while (y < year) : (y += 1) {
+        days += if (isLeapYear(y)) 366 else 365;
+    }
+    
+    // Add months
+    const days_in_month = [_]u8{ 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    var m: u8 = 1;
+    while (m < month) : (m += 1) {
+        days += days_in_month[m];
+        if (m == 2 and isLeapYear(year)) days += 1;
+    }
+    
+    // Add days
+    days += day - 1;
+    
+    return days * 24 * 60 * 60;
+}
+
+fn isLeapYear(year: u16) bool {
+    return (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0);
 }
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
-
-    // Configuration
-    const from_date = "2023-01-01";
-    const to_date = "2023-12-31";
-    const sma_options = ohlcv.indicators.SmaOptions{ .period = 200 }; // Example: 200-day SMA
-    const dataset = ohlcv.DataSet.btc_usd;
-
+    
     const stdout_writer = std.io.getStdOut().writer();
-
-    // Run calculation and handle potential printing errors from runSmaCalculation
-    if (try runSmaCalculation(allocator, stdout_writer, from_date, to_date, sma_options, dataset)) |sma_results| {
-        // If calculation succeeded (returned non-null), defer freeing and print results
-        defer allocator.free(sma_results);
-        try printSmaResultsTable(stdout_writer, sma_results, sma_options);
-    } else {
-        // If runSmaCalculation returned null, it means an error occurred
-        // and was already printed. We can just exit cleanly or add more logging here.
-        // std.log.info("SMA calculation failed, see error message above.", .{});
+    
+    try stdout_writer.print("╔══════════════════════════════════════════╗\n", .{});
+    try stdout_writer.print("║        OHLCV Library Demo v2.0           ║\n", .{});
+    try stdout_writer.print("╚══════════════════════════════════════════╝\n", .{});
+    
+    const config = Config{};
+    
+    // Analyze multiple datasets
+    const datasets = [_]ohlcv.PresetSource{ .btc_usd, .sp500 };
+    
+    for (datasets) |dataset| {
+        try runAnalysis(allocator, stdout_writer, dataset, config);
     }
-
-    // --- Run EMA ---
-    // Configure EMA options (example: 12-period EMA)
-    const ema_options = ohlcv.indicators.EmaOptions{ .period = 12 }; // REVERTED PATH
-    if (try runEmaCalculation(allocator, stdout_writer, from_date, to_date, ema_options, dataset)) |ema_results| {
-        defer allocator.free(ema_results); // Free EMA results memory
-        try printEmaResultsTable(stdout_writer, ema_results, ema_options); // Print EMA table
-    } else {
-        // Error already printed in runEmaCalculation
-    }
-
-    // --- Run RSI ---
-    const rsi_options = ohlcv.indicators.RsiOptions{ .period = 14 }; // Default RSI period
-    if (try runRsiCalculation(allocator, stdout_writer, from_date, to_date, rsi_options, dataset)) |rsi_results| {
-        defer allocator.free(rsi_results); // Free RSI results memory
-        try printRsiResultsTable(stdout_writer, rsi_results, rsi_options); // Print RSI table
-    } else {
-        // Error already printed in runRsiCalculation
-    }
+    
+    // Demonstrate custom data source
+    try stdout_writer.print("\n══════════════════════════════════════════\n", .{});
+    try stdout_writer.print("Custom Data Source Example\n", .{});
+    try stdout_writer.print("══════════════════════════════════════════\n\n", .{});
+    
+    const sample_csv =
+        \\Date,Open,High,Low,Close,Volume
+        \\2024-01-01,100.0,110.0,95.0,105.0,1000000
+        \\2024-01-02,105.0,115.0,100.0,112.0,1200000
+        \\2024-01-03,112.0,120.0,108.0,115.0,1100000
+        \\2024-01-04,115.0,118.0,110.0,113.0,900000
+        \\2024-01-05,113.0,117.0,111.0,116.0,1050000
+    ;
+    
+    var memory_source = try ohlcv.MemoryDataSource.init(allocator, sample_csv, false);
+    defer memory_source.dataSource().deinit();
+    
+    const data = try memory_source.dataSource().fetch(allocator);
+    defer allocator.free(data);
+    
+    const parser = ohlcv.CsvParser{ .allocator = allocator };
+    var custom_series = try parser.parse(data);
+    defer custom_series.deinit();
+    
+    try stdout_writer.print("Parsed {d} rows from custom data\n", .{custom_series.len()});
+    try stdout_writer.print("First row: timestamp={d}, close={d:.2}\n", .{
+        custom_series.arr_rows[0].u64_timestamp,
+        custom_series.arr_rows[0].f64_close,
+    });
 }
+
+// ╚══════════════════════════════════════════════════════════════════════════════════════════════════╝

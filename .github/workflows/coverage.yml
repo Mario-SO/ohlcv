@@ -1,0 +1,47 @@
+# ╔══════════════════════════════════════ Coverage Workflow ══════════════════════════════════════╗
+
+name: Coverage
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  coverage:
+    name: Test Coverage
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.14.1
+      
+      - name: Run tests with coverage
+        run: |
+          zig build test
+          echo "✅ All tests passed"
+      
+      - name: Count tests
+        run: |
+          TEST_COUNT=$(find test -name "*.zig" -exec grep -c "^test " {} \; | awk '{sum += $1} END {print sum}')
+          echo "Total tests: $TEST_COUNT"
+          echo "TEST_COUNT=$TEST_COUNT" >> $GITHUB_ENV
+      
+      - name: Create test badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: your-gist-id-here
+          filename: ohlcv-tests.json
+          label: tests
+          message: ${{ env.TEST_COUNT }} passing
+          color: brightgreen
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+# ╚════════════════════════════════════════════════════════════════════════════════════════════╝
