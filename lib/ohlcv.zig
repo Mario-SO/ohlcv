@@ -1,50 +1,46 @@
-// ╔══════════════════════════════════════ OHLCV Library v2.0 ══════════════════════════════════════╗
+// ╔═════════════════════════════════════ OHLCV Library v2.0 ══════════════════════════════════════╗
 
 const std = @import("std");
 
-// ┌──────────────────────────── Core Types ─────────────────────────────┐
+// ┌───────────────────────────────────────── Core Types ──────────────────────────────────────────┐
 
 pub const OhlcvRow = @import("types/ohlcv_row.zig").OhlcvRow;
 pub const OhlcBar = @import("types/ohlc_bar.zig").OhlcBar;
 
-// Legacy compatibility
-pub const Row = OhlcvRow;
-pub const Bar = OhlcBar;
+// └───────────────────────────────────────────────────────────────────────────────────────────────┘
 
-// └────────────────────────────────────────────────────────────────┘
-
-// ┌──────────────────────────── Data Sources ─────────────────────────────┐
+// ┌──────────────────────────────────────── Data Sources ─────────────────────────────────────────┐
 
 pub const DataSource = @import("data_source/data_source.zig").DataSource;
 pub const HttpDataSource = @import("data_source/http_data_source.zig").HttpDataSource;
 pub const FileDataSource = @import("data_source/file_data_source.zig").FileDataSource;
 pub const MemoryDataSource = @import("data_source/memory_data_source.zig").MemoryDataSource;
 
-// └────────────────────────────────────────────────────────────────┘
+// └───────────────────────────────────────────────────────────────────────────────────────────────┘
 
-// ┌──────────────────────────── Time Series ─────────────────────────────┐
+// ┌───────────────────────────────────────── Time Series ─────────────────────────────────────────┐
 
 pub const TimeSeries = @import("time_series.zig").TimeSeries;
 
-// └────────────────────────────────────────────────────────────────┘
+// └───────────────────────────────────────────────────────────────────────────────────────────────┘
 
-// ┌──────────────────────────── Parser ────────────────────────────┐
+// ┌─────────────────────────────────────────── Parser ────────────────────────────────────────────┐
 
 pub const CsvParser = @import("parser/csv_parser.zig").CsvParser;
 pub const ParseError = @import("parser/csv_parser.zig").ParseError;
 
-// └────────────────────────────────────────────────────────────────┘
+// └───────────────────────────────────────────────────────────────────────────────────────────────┘
 
-// ┌──────────────────────────── Indicators ────────────────────────────┐
+// ┌───────────────────────────────────────── Indicators ──────────────────────────────────────────┐
 
 pub const IndicatorResult = @import("indicators/indicator_result.zig").IndicatorResult;
 pub const SmaIndicator = @import("indicators/sma_indicator.zig").SmaIndicator;
 pub const EmaIndicator = @import("indicators/ema_indicator.zig").EmaIndicator;
 pub const RsiIndicator = @import("indicators/rsi_indicator.zig").RsiIndicator;
 
-// └────────────────────────────────────────────────────────────────────┘
+// └───────────────────────────────────────────────────────────────────────────────────────────────┘
 
-// ┌──────────────────────────── Convenience Functions ─────────────────────────────┐
+// ┌──────────────────────────────────── Convenience Functions ────────────────────────────────────┐
 
 /// Quick fetch and parse from predefined sources
 pub const PresetSource = enum { btc_usd, sp500, eth_usd, gold_usd };
@@ -67,6 +63,6 @@ pub fn fetchPreset(source: PresetSource, allocator: std.mem.Allocator) !TimeSeri
     return try parser.parse(data);
 }
 
-// └────────────────────────────────────────────────────────────────────┘
+// └───────────────────────────────────────────────────────────────────────────────────────────────┘
 
-// ╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
+// ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝

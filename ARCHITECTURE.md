@@ -50,7 +50,7 @@ DataSource       - Interface for all data sources
 HttpDataSource   - Fetch from HTTP/HTTPS endpoints
 FileDataSource   - Read from local files
 MemoryDataSource - Use in-memory data
-// ╚════════════════════════════════════════════════════════════════════════════════════════╝
+// ╚══════════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ### 3. Time Series Container
@@ -62,7 +62,7 @@ TimeSeries - Efficient container with:
   - Filter operations
   - Iterator support
   - Map transformations
-// ╚════════════════════════════════════════════════════════════════════════════════════════╝
+// ╚═════════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ### 4. Indicators

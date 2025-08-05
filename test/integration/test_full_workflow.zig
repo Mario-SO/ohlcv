@@ -142,4 +142,4 @@ test "Time series operations preserve data integrity" {
     try testing.expect(week1.arr_rows[week1.len() - 1].u64_timestamp < week2.arr_rows[0].u64_timestamp);
 }
 
-// ╚════════════════════════════════════════════════════════════════════════════════════════════╝
+// ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
