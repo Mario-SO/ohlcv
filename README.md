@@ -6,12 +6,19 @@ A modern Zig library for fetching and parsing Open-High-Low-Close-Volume (OHLCV)
 
 ## ✨ Features
 
-- **Fetch remote OHLCV data** for BTC, S&P 500, ETH, and Gold (from GitHub)
+- **Multiple Data Sources**: HTTP, local files, in-memory data
+
+- **Preset Datasets**: BTC, S&P 500, ETH, Gold (from GitHub or local)
+
 - **Fast, robust CSV parsing** (handles headers, skips invalid/zero rows)
-- **Simple, ergonomic API** (single import, clear types)
-- **Technical Indicators**: Includes implementations for SMA and EMA, easily extensible.
+
+- **Time Series Management**: Efficient slicing, filtering, and operations
+
+- **Technical Indicators**: SMA, EMA, RSI with extensible framework
+
 - **Memory safe**: all allocations are explicit, easy to free
-- **Extensible**: add new data sources or formats easily
+
+- **Extensible**: add new data sources, indicators, or parsers easily
 
 ---
 
@@ -38,20 +45,30 @@ const ohlcv = @import("lib/ohlcv.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer std.debug.assert(gpa.deinit() == .ok);
-    const alloc = gpa.allocator();
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-    // Fetch S&P 500 data (network + parser)
-    const rows = try ohlcv.fetch(.sp500, alloc);
-    defer alloc.free(rows);
+    // Fetch preset data
+    var series = try ohlcv.fetchPreset(.sp500, allocator);
+    defer series.deinit();
 
-    std.debug.print("Fetched {d} rows of data.\n", .{rows.len});
+    std.debug.print("Fetched {d} rows of data.\n", .{series.len()});
 
-    // Print the first 5 rows as a sample
-    const count = if (rows.len < 5) rows.len else 5;
-    for (rows[0..count], 0..) |row, i| {
-        std.debug.print("Row {d}: ts={d}, o={d:.2}, h={d:.2}, l={d:.2}, c={d:.2}, v={d}\n",
-            .{i, row.ts, row.o, row.h, row.l, row.c, row.v});
+    // Slice by time range
+    const from_ts = 1672531200; // 2023-01-01
+    const to_ts = 1704067199; // 2023-12-31
+    var filtered = try series.sliceByTime(from_ts, to_ts);
+    defer filtered.deinit();
+
+    // Calculate SMA
+    const sma = ohlcv.SmaIndicator{ .u32_period = 20 };
+    var result = try sma.calculate(filtered, allocator);
+    defer result.deinit();
+
+    // Print sample
+    const count = @min(5, result.len());
+    for (0..count) |i| {
+        std.debug.print("TS: {d}, SMA: {d:.2}\n", .{result.arr_timestamps[i], result.arr_values[i]});
     }
 }
 ```
@@ -62,35 +79,49 @@ pub fn main() !void {
 
 ### Types
 
-- `Row` — One OHLCV record:
+- `OhlcvRow` — Full OHLCV record:
   ```zig
-  const Row = struct {
-      ts: u64,   // Unix timestamp (seconds)
-      o: f64,    // Open
-      h: f64,    // High
-      l: f64,    // Low
-      c: f64,    // Close
-      v: u64,    // Volume
+  pub const OhlcvRow = struct {
+      u64_timestamp: u64,
+      f64_open: f64,
+      f64_high: f64,
+      f64_low: f64,
+      f64_close: f64,
+      u64_volume: u64,
   };
   ```
-- `Bar` — OHLC (no volume):
+
+- `OhlcBar` — OHLC without volume:
   ```zig
-  const Bar = struct {
-      ts: u64, o: f64, h: f64, l: f64, c: f64
+  pub const OhlcBar = struct {
+      u64_timestamp: u64,
+      f64_open: f64,
+      f64_high: f64,
+      f64_low: f64,
+      f64_close: f64,
   };
   ```
-- `DataSet` — Enum of available remote datasets:
+
+- `PresetSource` — Available presets:
   ```zig
-  const DataSet = enum { btc_usd, sp500, eth_usd, gold_usd };
+  pub const PresetSource = enum { btc_usd, sp500, eth_usd, gold_usd };
   ```
 
-### Functions
+- `TimeSeries` — Data container with operations
 
-- `fetch(ds: DataSet, alloc: Allocator) FetchError![]Row` — Fetch and parser remote CSV
-- `parseCsv(alloc, reader) ![]Row` — Parse CSV from any reader (default parser)
-- `parseCsvFast(alloc, reader) ![]Row` — Fast state-machine parser
-- `parseFileCsv(alloc, path) ![]Row` — Parse CSV from file
-- `parseStringCsv(alloc, data) ![]Row` — Parse CSV from in-memory string
+- `IndicatorResult` — Results from indicators
+
+### Key Components
+
+- Data Sources: `DataSource`, `HttpDataSource`, `FileDataSource`, `MemoryDataSource`
+
+- Parser: `CsvParser`
+
+- Indicators: `SmaIndicator`, `EmaIndicator`, `RsiIndicator`
+
+- Convenience: `fetchPreset(source: PresetSource, allocator) !TimeSeries`
+
+For detailed usage, see [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ### Errors
 
@@ -103,31 +134,52 @@ pub fn main() !void {
 ## 📁 Project Structure
 
 ```
-.
-├── build.zig         # Build script
-├── build.zig.zon     # Package manifest
-├── demo.zig          # Example usage executable
-├── INDICATORS.md     # List and status of technical indicators
-├── lib/              # Library source code
-│   ├── ohlcv.zig     # Public API (root source file)
-│   ├── parser/
-│   │   ├── parser.zig          # Main parser functions
-│   │   ├── state_machine.zig   # Internal state machine for parseCsvFast
-│   │   └── parser.test.zig     # Tests for parser
-│   ├── provider/
-│   │   ├── provider.zig
-│   │   └── provider.test.zig
-│   ├── types/
-│   │   ├── bar.zig
-│   │   ├── errors.zig
-│   │   └── row.zig
-│   ├── indicators/
-│   │   ├── indicators.zig # Indicator functions (SMA, EMA)
-│   │   └── *.zig          # Individual indicator implementations
-│   └── util/
-│       ├── date.zig
-│       └── date.test.zig
-└── README.md         # This file
+ohlcv/
+  - ARCHITECTURE.md
+  - build.zig
+  - build.zig.zon
+  - data/
+    - btc.csv
+    - eth.csv
+    - gold.csv
+    - sp500.csv
+  - demo.zig
+  - lib/
+    - data_source/
+      - data_source.zig
+      - file_data_source.zig
+      - http_data_source.zig
+      - memory_data_source.zig
+    - indicators/
+      - ema_indicator.zig
+      - indicator_result.zig
+      - rsi_indicator.zig
+      - sma_indicator.zig
+    - ohlcv.zig
+    - parser/
+      - csv_parser.zig
+    - time_series.zig
+    - types/
+      - ohlc_bar.zig
+      - ohlcv_row.zig
+  - README.md
+  - scripts/
+    - boxify.ts
+    - update_assets.py
+  - test/
+    - fixtures/
+      - sample_data.csv
+    - integration/
+      - test_full_workflow.zig
+    - README.md
+    - test_all.zig
+    - test_helpers.zig
+    - unit/
+      - test_csv_parser.zig
+      - test_data_sources.zig
+      - test_indicators.zig
+      - test_time_series.zig
+  - zig-out/
 ```
 
 ---
@@ -153,7 +205,7 @@ pub fn main() !void {
 ## 📚 See Also
 
 - [demo.zig](demo.zig) — Full example usage
-- [INDICATORS.md](INDICATORS.md) — List of implemented and planned technical indicators
+- [ARCHITECTURE.md](ARCHITECTURE.md) — Detailed architecture, examples, and extension guide
 - [lib/ohlcv.zig](lib/ohlcv.zig) — Public API
 
 ---
