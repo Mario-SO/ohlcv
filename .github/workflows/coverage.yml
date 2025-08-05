@@ -33,15 +33,17 @@ jobs:
           echo "Total tests: $TEST_COUNT"
           echo "TEST_COUNT=$TEST_COUNT" >> $GITHUB_ENV
       
-      - name: Create test badge
-        uses: schneegans/dynamic-badges-action@v1.7.0
-        with:
-          auth: ${{ secrets.GIST_SECRET }}
-          gistID: your-gist-id-here
-          filename: ohlcv-tests.json
-          label: tests
-          message: ${{ env.TEST_COUNT }} passing
-          color: brightgreen
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      # Badge generation requires GIST_SECRET to be configured
+      # Uncomment and configure if you want test badges:
+      # - name: Create test badge
+      #   uses: schneegans/dynamic-badges-action@v1.7.0
+      #   with:
+      #     auth: ${{ secrets.GIST_SECRET }}
+      #     gistID: your-gist-id-here
+      #     filename: ohlcv-tests.json
+      #     label: tests
+      #     message: ${{ env.TEST_COUNT }} passing
+      #     color: brightgreen
+      #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
 # ╚════════════════════════════════════════════════════════════════════════════════════════════╝

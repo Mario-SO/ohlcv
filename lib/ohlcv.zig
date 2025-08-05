@@ -56,13 +56,13 @@ pub fn fetchPreset(source: PresetSource, allocator: std.mem.Allocator) !TimeSeri
         .eth_usd => "https://raw.githubusercontent.com/Mario-SO/ohlcv/refs/heads/main/data/eth.csv",
         .gold_usd => "https://raw.githubusercontent.com/Mario-SO/ohlcv/refs/heads/main/data/gold.csv",
     };
-    
+
     var http_source = try HttpDataSource.init(allocator, url);
     defer http_source.dataSource().deinit();
-    
+
     const data = try http_source.dataSource().fetch(allocator);
     defer allocator.free(data);
-    
+
     const parser = CsvParser{ .allocator = allocator };
     return try parser.parse(data);
 }

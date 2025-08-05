@@ -6,11 +6,11 @@ const DataSource = @import("data_source.zig").DataSource;
 
 pub const MemoryDataSource = struct {
     const Self = @This();
-    
+
     allocator: Allocator,
     arr_data: []const u8,
     b_owns_data: bool,
-    
+
     /// Initialize memory data source with data
     pub fn init(allocator: Allocator, data: []const u8, owns_data: bool) !*Self {
         const self = try allocator.create(Self);
@@ -21,7 +21,7 @@ pub const MemoryDataSource = struct {
         };
         return self;
     }
-    
+
     /// Convert to DataSource interface
     pub fn dataSource(self: *Self) DataSource {
         return .{
@@ -32,12 +32,12 @@ pub const MemoryDataSource = struct {
             },
         };
     }
-    
+
     fn fetchImpl(ptr: *anyopaque, allocator: Allocator) anyerror![]u8 {
         const self: *Self = @ptrCast(@alignCast(ptr));
         return try allocator.dupe(u8, self.arr_data);
     }
-    
+
     fn deinitImpl(ptr: *anyopaque) void {
         const self: *Self = @ptrCast(@alignCast(ptr));
         if (self.b_owns_data) {
