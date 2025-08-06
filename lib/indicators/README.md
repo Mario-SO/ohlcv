@@ -11,9 +11,6 @@ This document lists common technical indicators used in financial analysis.
 *   [x] **Bollinger Bands:** SMA with upper/lower bands based on standard deviation
 *   [x] **ATR (Average True Range):** Measures market volatility
 *   [x] **Stochastic Oscillator:** Compares closing price to price range over a period
-
-**Recently Implemented:**
-
 *   [x] **WMA (Weighted Moving Average):** Moving average with linear weights
 *   [x] **ROC (Rate of Change):** Percentage change in price over a period
 *   [x] **Momentum:** Difference between current price and price n periods ago
