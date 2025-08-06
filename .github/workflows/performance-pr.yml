@@ -1,0 +1,225 @@
+name: PR Performance Check
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  performance-check:
+    name: Performance Comparison
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.14.1
+      
+      - name: Create directories
+        run: |
+          mkdir -p profiling_results/pr
+          mkdir -p profiling_results/main
+      
+      - name: Build and benchmark PR version
+        run: |
+          echo "🔧 Building PR version..."
+          zig build benchmark --summary none
+          zig build profile-memory --summary none
+          
+          echo "🚀 Benchmarking PR version..."
+          zig build benchmark > profiling_results/pr/benchmark_pr.txt 2>&1
+          zig build profile-memory > profiling_results/pr/memory_pr.txt 2>&1
+          
+          echo "PR benchmarks completed"
+      
+      - name: Checkout main branch
+        run: |
+          git fetch origin main
+          git checkout origin/main
+      
+      - name: Build and benchmark main version
+        run: |
+          echo "🔧 Building main version..."
+          zig build benchmark --summary none
+          zig build profile-memory --summary none
+          
+          echo "🚀 Benchmarking main version..."
+          zig build benchmark > profiling_results/main/benchmark_main.txt 2>&1
+          zig build profile-memory > profiling_results/main/memory_main.txt 2>&1
+          
+          echo "Main benchmarks completed"
+      
+      - name: Generate performance comparison
+        run: |
+          echo "📊 Generating performance comparison..."
+          
+          # Create comparison script
+          cat > compare_performance.py << 'EOF'
+          #!/usr/bin/env python3
+          import re
+          import sys
+          from pathlib import Path
+          
+          def parse_benchmarks(file_path):
+              """Parse benchmark results from file"""
+              results = {}
+              try:
+                  with open(file_path, 'r') as f:
+                      content = f.read()
+                  
+                  # Extract timing results
+                  pattern = r'(SMA-\d+|EMA-\d+|RSI-\d+|Bollinger-\d+|MACD|ATR-\d+):\s+([0-9.]+)\s+ms'
+                  matches = re.findall(pattern, content)
+                  
+                  for indicator, time_str in matches:
+                      if indicator not in results:
+                          results[indicator] = []
+                      results[indicator].append(float(time_str))
+                  
+                  return results
+              except Exception as e:
+                  print(f"Error parsing {file_path}: {e}")
+                  return {}
+          
+          def compare_results(main_results, pr_results):
+              """Compare benchmark results and generate report"""
+              print("# 🔍 Performance Comparison: PR vs Main")
+              print()
+              print("| Indicator | Main (ms) | PR (ms) | Delta | Change | Status |")
+              print("|-----------|-----------|---------|-------|--------|--------|")
+              
+              all_indicators = set(main_results.keys()) | set(pr_results.keys())
+              significant_changes = []
+              
+              for indicator in sorted(all_indicators):
+                  if indicator in main_results and indicator in pr_results:
+                      # Average the results if multiple data points
+                      main_avg = sum(main_results[indicator]) / len(main_results[indicator])
+                      pr_avg = sum(pr_results[indicator]) / len(pr_results[indicator])
+                      
+                      delta = pr_avg - main_avg
+                      change_pct = (delta / main_avg) * 100 if main_avg > 0 else 0
+                      
+                      # Determine status
+                      if abs(change_pct) < 5:  # Less than 5% change
+                          status = "✅ OK"
+                      elif change_pct > 0:  # Slower
+                          if change_pct > 20:
+                              status = "❌ SLOWER"
+                              significant_changes.append(f"{indicator}: {change_pct:+.1f}% slower")
+                          else:
+                              status = "⚠️ SLOWER"
+                      else:  # Faster
+                          status = "🚀 FASTER"
+                      
+                      print(f"| {indicator:<15} | {main_avg:>8.3f} | {pr_avg:>8.3f} | {delta:>+6.3f} | {change_pct:>+6.1f}% | {status} |")
+                  elif indicator in main_results:
+                      print(f"| {indicator:<15} | {sum(main_results[indicator])/len(main_results[indicator]):>8.3f} | Missing | - | - | ⚠️ MISSING |")
+                  elif indicator in pr_results:
+                      print(f"| {indicator:<15} | Missing | {sum(pr_results[indicator])/len(pr_results[indicator]):>8.3f} | - | - | ✨ NEW |")
+              
+              print()
+              if significant_changes:
+                  print("## ⚠️ Significant Performance Changes")
+                  for change in significant_changes:
+                      print(f"- {change}")
+                  print()
+                  return False  # Performance regression detected
+              else:
+                  print("## ✅ No Significant Performance Regressions")
+                  print("All performance changes are within acceptable limits.")
+                  print()
+                  return True
+          
+          if __name__ == "__main__":
+              main_results = parse_benchmarks("profiling_results/main/benchmark_main.txt")
+              pr_results = parse_benchmarks("profiling_results/pr/benchmark_pr.txt")
+              
+              if not main_results or not pr_results:
+                  print("❌ Could not parse benchmark results")
+                  sys.exit(1)
+              
+              success = compare_results(main_results, pr_results)
+              sys.exit(0 if success else 1)
+          EOF
+          
+          python3 compare_performance.py > performance_comparison.md
+          cat performance_comparison.md
+      
+      - name: Comment PR with performance comparison
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let comparison = '';
+            try {
+              comparison = fs.readFileSync('performance_comparison.md', 'utf8');
+            } catch (error) {
+              comparison = '❌ Failed to generate performance comparison';
+            }
+            
+            const body = `${comparison}
+
+---
+*Automated performance comparison by GitHub Actions*
+*Commit: ${{ github.event.pull_request.head.sha }}*`;
+            
+            // Find existing performance comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Performance Comparison: PR vs Main')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body,
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+      
+      - name: Check for performance regressions
+        run: |
+          if python3 compare_performance.py; then
+            echo "✅ Performance check passed"
+          else
+            echo "❌ Performance regression detected"
+            echo "This PR introduces significant performance regressions."
+            echo "Please review the changes and consider optimization."
+            exit 1
+          fi
+      
+      - name: Upload comparison results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-performance-comparison
+          path: |
+            performance_comparison.md
+            profiling_results/
+          retention-days: 30

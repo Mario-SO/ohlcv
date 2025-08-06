@@ -42,4 +42,43 @@ pub fn build(b: *std.Build) void {
     // Pipe any args from the command line: `zig build run -- arg1 arg2`
     if (b.args) |user_args| run_cmd.addArgs(user_args);
     b.step("run", "Build and run demo").dependOn(&run_cmd.step);
+
+    // ─── Benchmark executables ───
+    const benchmark_exe = b.addExecutable(.{
+        .name = "benchmark",
+        .root_source_file = b.path("benchmark/simple_benchmark.zig"),
+        .target = target,
+        .optimize = .ReleaseFast, // Always use fast optimization for benchmarks
+    });
+    benchmark_exe.root_module.addImport("ohlcv", mod);
+    b.installArtifact(benchmark_exe);
+
+    const benchmark_run = b.addRunArtifact(benchmark_exe);
+    b.step("benchmark", "Run performance benchmarks").dependOn(&benchmark_run.step);
+
+    // ─── Advanced benchmark ───
+    const adv_benchmark_exe = b.addExecutable(.{
+        .name = "benchmark-advanced", 
+        .root_source_file = b.path("benchmark/benchmark_indicators.zig"),
+        .target = target,
+        .optimize = .ReleaseFast,
+    });
+    adv_benchmark_exe.root_module.addImport("ohlcv", mod);
+    b.installArtifact(adv_benchmark_exe);
+
+    const adv_benchmark_run = b.addRunArtifact(adv_benchmark_exe);
+    b.step("benchmark-advanced", "Run advanced performance benchmarks").dependOn(&adv_benchmark_run.step);
+
+    // ─── Memory profiler ───
+    const profiler_exe = b.addExecutable(.{
+        .name = "memory-profiler",
+        .root_source_file = b.path("benchmark/simple_memory_profiler.zig"),
+        .target = target,
+        .optimize = .Debug, // Use debug for memory profiling
+    });
+    profiler_exe.root_module.addImport("ohlcv", mod);
+    b.installArtifact(profiler_exe);
+
+    const profiler_run = b.addRunArtifact(profiler_exe);
+    b.step("profile-memory", "Run memory profiling").dependOn(&profiler_run.step);
 }

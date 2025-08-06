@@ -39,3 +39,5 @@ zig-out/
 build/
 build-*/
 docgen_tmp/
+
+profiling_results/
