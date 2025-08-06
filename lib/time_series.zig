@@ -8,9 +8,15 @@ const OhlcvRow = @import("types/ohlcv_row.zig").OhlcvRow;
 pub const TimeSeries = struct {
     const Self = @This();
 
+    // ┌───────────────────────────────────────── Attributes ──────────────────────────────────────────┐
+
     arr_rows: []OhlcvRow,
     allocator: Allocator,
     b_owns_memory: bool,
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌─────────────────────────────────────── Initialization ────────────────────────────────────────┐
 
     /// Initialize an empty time series
     pub fn init(allocator: Allocator) Self {
@@ -39,6 +45,10 @@ pub const TimeSeries = struct {
         }
     }
 
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌────────────────────────────────────── Memory Management ──────────────────────────────────────┐
+
     /// Clean up memory if owned
     pub fn deinit(self: Self) void {
         if (self.b_owns_memory and self.arr_rows.len > 0) {
@@ -55,6 +65,10 @@ pub const TimeSeries = struct {
     pub fn isEmpty(self: Self) bool {
         return self.arr_rows.len == 0;
     }
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌────────────────────────────────────── Data Manipulation ──────────────────────────────────────┐
 
     /// Create a slice by timestamp range (zero-copy view)
     pub fn sliceByTime(self: Self, u64_from: u64, u64_to: u64) !Self {
@@ -111,6 +125,10 @@ pub const TimeSeries = struct {
         }.lessThan);
     }
 
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌────────────────────────────────────────── Iterator ───────────────────────────────────────────┐
+
     /// Get iterator for efficient traversal
     pub fn iterator(self: Self) Iterator {
         return .{
@@ -140,6 +158,10 @@ pub const TimeSeries = struct {
         }
     };
 
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌─────────────────────────────────────── Data Extraction ───────────────────────────────────────┐
+
     /// Map operation for transforming data
     pub fn map(self: Self, comptime T: type, comptime mapFn: fn (row: OhlcvRow) T, allocator: Allocator) ![]T {
         const result = try allocator.alloc(T, self.arr_rows.len);
@@ -157,6 +179,8 @@ pub const TimeSeries = struct {
             }
         }.getClose, allocator);
     }
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 };
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
