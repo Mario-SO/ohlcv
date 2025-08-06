@@ -8,13 +8,23 @@ const IndicatorResult = @import("indicator_result.zig").IndicatorResult;
 pub const WmaIndicator = struct {
     const Self = @This();
 
+    // ┌───────────────────────────────────────── Attributes ──────────────────────────────────────────┐
+
     u32_period: u32,
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌──────────────────────────────────────────── Error ────────────────────────────────────────────┐
 
     pub const Error = error{
         InsufficientData,
         InvalidParameters,
         OutOfMemory,
     };
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌────────────────────────────── Calculate Weighted Moving Average ──────────────────────────────┐
 
     /// Calculate Weighted Moving Average
     pub fn calculate(self: Self, series: TimeSeries, allocator: Allocator) Error!IndicatorResult {
@@ -55,6 +65,8 @@ pub const WmaIndicator = struct {
             .allocator = allocator,
         };
     }
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 };
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝

@@ -8,13 +8,23 @@ const IndicatorResult = @import("indicator_result.zig").IndicatorResult;
 pub const WilliamsRIndicator = struct {
     const Self = @This();
 
+    // ┌───────────────────────────────────────── Attributes ──────────────────────────────────────────┐
+
     u32_period: u32 = 14,
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌──────────────────────────────────────────── Error ────────────────────────────────────────────┐
 
     pub const Error = error{
         InsufficientData,
         InvalidParameters,
         OutOfMemory,
     };
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌──────────────────────────────────── Calculate Williams %R ────────────────────────────────────┐
 
     /// Calculate Williams %R
     pub fn calculate(self: Self, series: TimeSeries, allocator: Allocator) Error!IndicatorResult {
@@ -66,6 +76,8 @@ pub const WilliamsRIndicator = struct {
             .allocator = allocator,
         };
     }
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 };
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝

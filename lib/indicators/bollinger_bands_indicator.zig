@@ -8,8 +8,14 @@ const IndicatorResult = @import("indicator_result.zig").IndicatorResult;
 pub const BollingerBandsIndicator = struct {
     const Self = @This();
 
+    // ┌───────────────────────────────────────── Attributes ──────────────────────────────────────────┐
+
     u32_period: u32 = 20,
     f64_std_dev_multiplier: f64 = 2.0,
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌──────────────────────────────────────────── Error ────────────────────────────────────────────┐
 
     pub const Error = error{
         InsufficientData,
@@ -17,17 +23,25 @@ pub const BollingerBandsIndicator = struct {
         OutOfMemory,
     };
 
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌─────────────────────────────────────────── Result ────────────────────────────────────────────┐
+
     pub const BollingerBandsResult = struct {
         upper_band: IndicatorResult,
         middle_band: IndicatorResult, // SMA
         lower_band: IndicatorResult,
-        
+
         pub fn deinit(self: *BollingerBandsResult) void {
             self.upper_band.deinit();
             self.middle_band.deinit();
             self.lower_band.deinit();
         }
     };
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌───────────────── Calculate Bollinger Bands using SMA and standard deviation ──────────────────┐
 
     /// Calculate Bollinger Bands (Upper, Middle, Lower)
     pub fn calculate(self: Self, series: TimeSeries, allocator: Allocator) Error!BollingerBandsResult {
@@ -40,10 +54,10 @@ pub const BollingerBandsIndicator = struct {
         // Allocate arrays for all three bands
         var upper_values = try allocator.alloc(f64, result_len);
         errdefer allocator.free(upper_values);
-        
+
         var middle_values = try allocator.alloc(f64, result_len);
         errdefer allocator.free(middle_values);
-        
+
         var lower_values = try allocator.alloc(f64, result_len);
         errdefer allocator.free(lower_values);
 
@@ -54,7 +68,7 @@ pub const BollingerBandsIndicator = struct {
         for (0..result_len) |i| {
             const window_start = i;
             const window_end = i + period;
-            
+
             // Calculate SMA (middle band)
             var sum: f64 = 0;
             for (series.arr_rows[window_start..window_end]) |row| {
@@ -62,7 +76,7 @@ pub const BollingerBandsIndicator = struct {
             }
             const sma = sum / @as(f64, @floatFromInt(period));
             middle_values[i] = sma;
-            
+
             // Calculate standard deviation
             var variance: f64 = 0;
             for (series.arr_rows[window_start..window_end]) |row| {
@@ -70,12 +84,12 @@ pub const BollingerBandsIndicator = struct {
                 variance += diff * diff;
             }
             const std_dev = @sqrt(variance / @as(f64, @floatFromInt(period)));
-            
+
             // Calculate bands
             const band_offset = std_dev * self.f64_std_dev_multiplier;
             upper_values[i] = sma + band_offset;
             lower_values[i] = sma - band_offset;
-            
+
             timestamps[i] = series.arr_rows[window_end - 1].u64_timestamp;
         }
 
@@ -83,7 +97,7 @@ pub const BollingerBandsIndicator = struct {
         const upper_timestamps = try allocator.dupe(u64, timestamps);
         const middle_timestamps = try allocator.dupe(u64, timestamps);
         const lower_timestamps = try allocator.dupe(u64, timestamps);
-        
+
         allocator.free(timestamps);
 
         return BollingerBandsResult{
@@ -104,6 +118,8 @@ pub const BollingerBandsIndicator = struct {
             },
         };
     }
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 };
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝

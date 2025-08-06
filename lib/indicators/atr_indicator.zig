@@ -8,7 +8,13 @@ const IndicatorResult = @import("indicator_result.zig").IndicatorResult;
 pub const AtrIndicator = struct {
     const Self = @This();
 
+    // ┌───────────────────────────────────────── Attributes ──────────────────────────────────────────┐
+
     u32_period: u32 = 14,
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌──────────────────────────────────────────── Error ────────────────────────────────────────────┐
 
     pub const Error = error{
         InsufficientData,
@@ -16,13 +22,17 @@ pub const AtrIndicator = struct {
         OutOfMemory,
     };
 
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌──────────────────────────────── Calculate Average True Range ─────────────────────────────────┐
+
     /// Calculate Average True Range
     pub fn calculate(self: Self, series: TimeSeries, allocator: Allocator) Error!IndicatorResult {
         if (self.u32_period == 0) return Error.InvalidParameters;
         if (series.len() <= self.u32_period) return Error.InsufficientData;
 
         const period = self.u32_period;
-        
+
         // Calculate True Range for each bar (starting from index 1)
         var true_ranges = try allocator.alloc(f64, series.len() - 1);
         defer allocator.free(true_ranges);
@@ -30,11 +40,11 @@ pub const AtrIndicator = struct {
         for (1..series.len()) |i| {
             const current = series.arr_rows[i];
             const previous = series.arr_rows[i - 1];
-            
+
             const high_low = current.f64_high - current.f64_low;
             const high_close_prev = @abs(current.f64_high - previous.f64_close);
             const low_close_prev = @abs(current.f64_low - previous.f64_close);
-            
+
             true_ranges[i - 1] = @max(high_low, @max(high_close_prev, low_close_prev));
         }
 
@@ -70,6 +80,8 @@ pub const AtrIndicator = struct {
             .allocator = allocator,
         };
     }
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 };
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝

@@ -8,13 +8,23 @@ const IndicatorResult = @import("indicator_result.zig").IndicatorResult;
 pub const MomentumIndicator = struct {
     const Self = @This();
 
+    // ┌───────────────────────────────────────── Attributes ──────────────────────────────────────────┐
+
     u32_period: u32 = 10,
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌──────────────────────────────────────────── Error ────────────────────────────────────────────┐
 
     pub const Error = error{
         InsufficientData,
         InvalidParameters,
         OutOfMemory,
     };
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌──────── Calculate Momentum (difference between current price and price n periods ago) ────────┐
 
     /// Calculate Momentum (difference between current price and price n periods ago)
     pub fn calculate(self: Self, series: TimeSeries, allocator: Allocator) Error!IndicatorResult {
@@ -47,6 +57,8 @@ pub const MomentumIndicator = struct {
             .allocator = allocator,
         };
     }
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 };
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝

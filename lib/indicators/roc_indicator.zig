@@ -8,7 +8,13 @@ const IndicatorResult = @import("indicator_result.zig").IndicatorResult;
 pub const RocIndicator = struct {
     const Self = @This();
 
+    // ┌───────────────────────────────────────── Attributes ──────────────────────────────────────────┐
+
     u32_period: u32 = 14,
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌──────────────────────────────────────────── Error ────────────────────────────────────────────┐
 
     pub const Error = error{
         InsufficientData,
@@ -16,6 +22,10 @@ pub const RocIndicator = struct {
         OutOfMemory,
         DivisionByZero,
     };
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌──────────────────────── Calculate Rate of Change (ROC) as percentage ─────────────────────────┐
 
     /// Calculate Rate of Change (ROC) as percentage
     pub fn calculate(self: Self, series: TimeSeries, allocator: Allocator) Error!IndicatorResult {
@@ -50,6 +60,8 @@ pub const RocIndicator = struct {
             .allocator = allocator,
         };
     }
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 };
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝

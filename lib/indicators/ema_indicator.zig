@@ -8,14 +8,24 @@ const IndicatorResult = @import("indicator_result.zig").IndicatorResult;
 pub const EmaIndicator = struct {
     const Self = @This();
 
+    // ┌───────────────────────────────────────── Attributes ──────────────────────────────────────────┐
+
     u32_period: u32,
     f64_smoothing: f64 = 2.0,
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌──────────────────────────────────────────── Error ────────────────────────────────────────────┐
 
     pub const Error = error{
         InsufficientData,
         InvalidParameters,
         OutOfMemory,
     };
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌──────────────────────────── Calculate Exponential Moving Average ─────────────────────────────┐
 
     /// Calculate Exponential Moving Average
     pub fn calculate(self: Self, series: TimeSeries, allocator: Allocator) Error!IndicatorResult {
@@ -64,6 +74,8 @@ pub const EmaIndicator = struct {
             .allocator = allocator,
         };
     }
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 };
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝

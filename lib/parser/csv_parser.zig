@@ -5,6 +5,8 @@ const Allocator = std.mem.Allocator;
 const OhlcvRow = @import("../types/ohlcv_row.zig").OhlcvRow;
 const TimeSeries = @import("../time_series.zig").TimeSeries;
 
+// ┌──────────────────────────────────────────── Error ────────────────────────────────────────────┐
+
 pub const ParseError = error{
     InvalidFormat,
     InvalidTimestamp,
@@ -14,12 +16,20 @@ pub const ParseError = error{
     EndOfStream,
 };
 
+// └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
 pub const CsvParser = struct {
     const Self = @This();
+
+    // ┌───────────────────────────────────────── Attributes ──────────────────────────────────────────┐
 
     allocator: Allocator,
     b_skip_header: bool = true,
     b_validate_data: bool = true,
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌─────────────────────────────── Parse CSV data into TimeSeries ────────────────────────────────┐
 
     /// Parse CSV data into TimeSeries
     pub fn parse(self: Self, data: []const u8) !TimeSeries {
@@ -68,6 +78,10 @@ pub const CsvParser = struct {
         return try TimeSeries.fromSlice(self.allocator, owned_rows, true);
     }
 
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌─────────────────────────────────── Parse a single CSV line ───────────────────────────────────┐
+
     /// Parse a single CSV line
     fn parseLine(self: Self, line: []const u8) !OhlcvRow {
         _ = self;
@@ -89,6 +103,10 @@ pub const CsvParser = struct {
             .u64_volume = std.fmt.parseInt(u64, volume_str, 10) catch return ParseError.InvalidNumber,
         };
     }
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌───────────────────────────── Parse YYYY-MM-DD to Unix timestamp ──────────────────────────────┐
 
     /// Parse YYYY-MM-DD to Unix timestamp
     fn parseDate(date_str: []const u8) !u64 {
@@ -128,9 +146,15 @@ pub const CsvParser = struct {
         return days_since_epoch * 24 * 60 * 60;
     }
 
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌───────────────────────────── Helper: Check if year is leap year ──────────────────────────────┐
+
     fn isLeapYear(year: u16) bool {
         return (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0);
     }
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 };
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝

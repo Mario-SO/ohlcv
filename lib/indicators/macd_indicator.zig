@@ -9,9 +9,15 @@ const EmaIndicator = @import("ema_indicator.zig").EmaIndicator;
 pub const MacdIndicator = struct {
     const Self = @This();
 
+    // ┌───────────────────────────────────────── Attributes ──────────────────────────────────────────┐
+
     u32_fast_period: u32 = 12,
     u32_slow_period: u32 = 26,
     u32_signal_period: u32 = 9,
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌──────────────────────────────────────────── Error ────────────────────────────────────────────┐
 
     pub const Error = error{
         InsufficientData,
@@ -19,17 +25,25 @@ pub const MacdIndicator = struct {
         OutOfMemory,
     };
 
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌─────────────────────────────────────────── Result ────────────────────────────────────────────┐
+
     pub const MacdResult = struct {
         macd_line: IndicatorResult,
         signal_line: IndicatorResult,
         histogram: IndicatorResult,
-        
+
         pub fn deinit(self: *MacdResult) void {
             self.macd_line.deinit();
             self.signal_line.deinit();
             self.histogram.deinit();
         }
     };
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌─────────────────── Calculate MACD (Moving Average Convergence Divergence) ────────────────────┐
 
     /// Calculate MACD (Moving Average Convergence Divergence)
     pub fn calculate(self: Self, series: TimeSeries, allocator: Allocator) Error!MacdResult {
@@ -57,10 +71,10 @@ pub const MacdIndicator = struct {
         // Start from the slow EMA index since it starts later
         const start_offset = self.u32_slow_period - self.u32_fast_period;
         const macd_len = slow_result.len();
-        
+
         var macd_values = try allocator.alloc(f64, macd_len);
         errdefer allocator.free(macd_values);
-        
+
         var macd_timestamps = try allocator.alloc(u64, macd_len);
         errdefer allocator.free(macd_timestamps);
 
@@ -72,7 +86,7 @@ pub const MacdIndicator = struct {
         // Create temporary time series for MACD values to calculate signal line
         var macd_rows = try allocator.alloc(@import("../types/ohlcv_row.zig").OhlcvRow, macd_len);
         defer allocator.free(macd_rows);
-        
+
         for (0..macd_len) |i| {
             macd_rows[i] = .{
                 .u64_timestamp = macd_timestamps[i],
@@ -98,7 +112,7 @@ pub const MacdIndicator = struct {
         const histogram_len = signal_result.len();
         var histogram_values = try allocator.alloc(f64, histogram_len);
         errdefer allocator.free(histogram_values);
-        
+
         var histogram_timestamps = try allocator.alloc(u64, histogram_len);
         errdefer allocator.free(histogram_timestamps);
 
@@ -111,7 +125,7 @@ pub const MacdIndicator = struct {
         // Create final MACD line with same length as signal/histogram
         var final_macd_values = try allocator.alloc(f64, histogram_len);
         errdefer allocator.free(final_macd_values);
-        
+
         var final_macd_timestamps = try allocator.alloc(u64, histogram_len);
         errdefer allocator.free(final_macd_timestamps);
 
@@ -138,6 +152,8 @@ pub const MacdIndicator = struct {
             },
         };
     }
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 };
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
