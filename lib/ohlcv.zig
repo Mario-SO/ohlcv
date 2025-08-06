@@ -37,6 +37,10 @@ pub const IndicatorResult = @import("indicators/indicator_result.zig").Indicator
 pub const SmaIndicator = @import("indicators/sma_indicator.zig").SmaIndicator;
 pub const EmaIndicator = @import("indicators/ema_indicator.zig").EmaIndicator;
 pub const RsiIndicator = @import("indicators/rsi_indicator.zig").RsiIndicator;
+pub const BollingerBandsIndicator = @import("indicators/bollinger_bands_indicator.zig").BollingerBandsIndicator;
+pub const MacdIndicator = @import("indicators/macd_indicator.zig").MacdIndicator;
+pub const AtrIndicator = @import("indicators/atr_indicator.zig").AtrIndicator;
+pub const StochasticIndicator = @import("indicators/stochastic_indicator.zig").StochasticIndicator;
 
 // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 

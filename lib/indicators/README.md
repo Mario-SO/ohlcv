@@ -6,16 +6,16 @@ This document lists common technical indicators used in financial analysis.
 
 *   [x] **SMA (Simple Moving Average):** Average of closing prices over a period
 *   [x] **EMA (Exponential Moving Average):** Weighted average, more responsive to recent prices
+*   [x] **RSI (Relative Strength Index):** Measures speed and change of price movements (momentum oscillator)
+*   [x] **MACD (Moving Average Convergence Divergence):** Difference between two EMAs, with signal line and histogram
+*   [x] **Bollinger Bands:** SMA with upper/lower bands based on standard deviation
+*   [x] **ATR (Average True Range):** Measures market volatility
+*   [x] **Stochastic Oscillator:** Compares closing price to price range over a period
 
 **Planned / Not Implemented:**
 
 *   [ ] **WMA (Weighted Moving Average):** Moving average with linear weights
 *   [ ] **VWAP (Volume Weighted Average Price):** Average price weighted by volume
-*   [ ] **MACD (Moving Average Convergence Divergence):** Difference between two EMAs, with signal line and histogram
-*   [ ] **RSI (Relative Strength Index):** Measures speed and change of price movements (momentum oscillator)
-*   [ ] **Stochastic Oscillator:** Compares closing price to price range over a period
-*   [ ] **Bollinger Bands:** SMA with upper/lower bands based on standard deviation
-*   [ ] **ATR (Average True Range):** Measures market volatility
 *   [ ] **ADX (Average Directional Index):** Measures trend strength
 *   [ ] **CCI (Commodity Channel Index):** Measures price deviation from average
 *   [ ] **ROC (Rate of Change):** Percentage change in price over a period

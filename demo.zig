@@ -10,6 +10,9 @@ const Config = struct {
     u32_sma_period: u32 = 200,
     u32_ema_period: u32 = 12,
     u32_rsi_period: u32 = 14,
+    u32_bb_period: u32 = 20,
+    u32_atr_period: u32 = 14,
+    u32_stoch_k_period: u32 = 14,
 };
 
 /// Run analysis on a dataset
@@ -42,6 +45,10 @@ fn runAnalysis(allocator: std.mem.Allocator, writer: anytype, dataset: ohlcv.Pre
     try calculateAndPrintSMA(&filtered, allocator, writer, config.u32_sma_period);
     try calculateAndPrintEMA(&filtered, allocator, writer, config.u32_ema_period);
     try calculateAndPrintRSI(&filtered, allocator, writer, config.u32_rsi_period);
+    try calculateAndPrintBollingerBands(&filtered, allocator, writer, config.u32_bb_period);
+    try calculateAndPrintMACD(&filtered, allocator, writer);
+    try calculateAndPrintATR(&filtered, allocator, writer, config.u32_atr_period);
+    try calculateAndPrintStochastic(&filtered, allocator, writer, config.u32_stoch_k_period);
 }
 
 /// Calculate and print SMA results
@@ -89,6 +96,66 @@ fn calculateAndPrintRSI(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator,
     try printLastValues(&result, writer, 5);
 }
 
+/// Calculate and print Bollinger Bands results
+fn calculateAndPrintBollingerBands(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype, period: u32) !void {
+    const bb = ohlcv.BollingerBandsIndicator{ .u32_period = period };
+
+    var result = bb.calculate(series.*, allocator) catch |err| {
+        try writer.print("Bollinger Bands({d}) Error: {any}\n\n", .{ period, err });
+        return;
+    };
+    defer result.deinit();
+
+    try writer.print("Bollinger Bands({d}) Results:\n", .{period});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printBollingerBands(&result, writer, 5);
+}
+
+/// Calculate and print MACD results
+fn calculateAndPrintMACD(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype) !void {
+    const macd = ohlcv.MacdIndicator{};
+
+    var result = macd.calculate(series.*, allocator) catch |err| {
+        try writer.print("MACD Error: {any}\n\n", .{err});
+        return;
+    };
+    defer result.deinit();
+
+    try writer.print("MACD(12,26,9) Results:\n", .{});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printMACD(&result, writer, 5);
+}
+
+/// Calculate and print ATR results
+fn calculateAndPrintATR(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype, period: u32) !void {
+    const atr = ohlcv.AtrIndicator{ .u32_period = period };
+
+    var result = atr.calculate(series.*, allocator) catch |err| {
+        try writer.print("ATR({d}) Error: {any}\n\n", .{ period, err });
+        return;
+    };
+    defer result.deinit();
+
+    try writer.print("ATR({d}) Results:\n", .{period});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printLastValues(&result, writer, 5);
+}
+
+/// Calculate and print Stochastic results
+fn calculateAndPrintStochastic(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype, k_period: u32) !void {
+    const stoch = ohlcv.StochasticIndicator{ .u32_k_period = k_period };
+
+    var result = stoch.calculate(series.*, allocator) catch |err| {
+        try writer.print("Stochastic({d},1,3) Error: {any}\n\n", .{ k_period, err });
+        return;
+    };
+    defer result.deinit();
+
+    try writer.print("Stochastic({d},1,3) Results:\n", .{k_period});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printStochastic(&result, writer, 5);
+}
+
 /// Print last N values from indicator result
 fn printLastValues(result: *const ohlcv.IndicatorResult, writer: anytype, n: usize) !void {
     const start = if (result.len() > n) result.len() - n else 0;
@@ -102,6 +169,68 @@ fn printLastValues(result: *const ohlcv.IndicatorResult, writer: anytype, n: usi
         try writer.print("{d:17} │ {d:.2}\n", .{
             result.arr_timestamps[i],
             result.arr_values[i],
+        });
+    }
+    try writer.print("\n", .{});
+}
+
+/// Print Bollinger Bands values
+fn printBollingerBands(result: *const ohlcv.BollingerBandsIndicator.BollingerBandsResult, writer: anytype, n: usize) !void {
+    const len = result.middle_band.len();
+    const start = if (len > n) len - n else 0;
+    const end = len;
+
+    try writer.print("Timestamp         | Upper     | Middle    | Lower\n", .{});
+    try writer.print("──────────────────┼───────────┼───────────┼───────────\n", .{});
+
+    var i = start;
+    while (i < end) : (i += 1) {
+        try writer.print("{d:17} │ {d:9.2} │ {d:9.2} │ {d:9.2}\n", .{
+            result.middle_band.arr_timestamps[i],
+            result.upper_band.arr_values[i],
+            result.middle_band.arr_values[i],
+            result.lower_band.arr_values[i],
+        });
+    }
+    try writer.print("\n", .{});
+}
+
+/// Print MACD values
+fn printMACD(result: *const ohlcv.MacdIndicator.MacdResult, writer: anytype, n: usize) !void {
+    const len = result.macd_line.len();
+    const start = if (len > n) len - n else 0;
+    const end = len;
+
+    try writer.print("Timestamp         | MACD      | Signal    | Histogram\n", .{});
+    try writer.print("──────────────────┼───────────┼───────────┼───────────\n", .{});
+
+    var i = start;
+    while (i < end) : (i += 1) {
+        try writer.print("{d:17} │ {d:9.4} │ {d:9.4} │ {d:9.4}\n", .{
+            result.macd_line.arr_timestamps[i],
+            result.macd_line.arr_values[i],
+            result.signal_line.arr_values[i],
+            result.histogram.arr_values[i],
+        });
+    }
+    try writer.print("\n", .{});
+}
+
+/// Print Stochastic values
+fn printStochastic(result: *const ohlcv.StochasticIndicator.StochasticResult, writer: anytype, n: usize) !void {
+    const len = result.k_percent.len();
+    const start = if (len > n) len - n else 0;
+    const end = len;
+
+    try writer.print("Timestamp         | %K        | %D\n", .{});
+    try writer.print("──────────────────┼───────────┼───────────\n", .{});
+
+    var i = start;
+    while (i < end) : (i += 1) {
+        try writer.print("{d:17} │ {d:9.2} │ {d:9.2}\n", .{
+            result.k_percent.arr_timestamps[i],
+            result.k_percent.arr_values[i],
+            result.d_percent.arr_values[i],
         });
     }
     try writer.print("\n", .{});
