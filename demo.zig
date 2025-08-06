@@ -13,6 +13,10 @@ const Config = struct {
     u32_bb_period: u32 = 20,
     u32_atr_period: u32 = 14,
     u32_stoch_k_period: u32 = 14,
+    u32_wma_period: u32 = 20,
+    u32_roc_period: u32 = 12,
+    u32_momentum_period: u32 = 10,
+    u32_williams_r_period: u32 = 14,
 };
 
 /// Run analysis on a dataset
@@ -49,6 +53,10 @@ fn runAnalysis(allocator: std.mem.Allocator, writer: anytype, dataset: ohlcv.Pre
     try calculateAndPrintMACD(&filtered, allocator, writer);
     try calculateAndPrintATR(&filtered, allocator, writer, config.u32_atr_period);
     try calculateAndPrintStochastic(&filtered, allocator, writer, config.u32_stoch_k_period);
+    try calculateAndPrintWMA(&filtered, allocator, writer, config.u32_wma_period);
+    try calculateAndPrintROC(&filtered, allocator, writer, config.u32_roc_period);
+    try calculateAndPrintMomentum(&filtered, allocator, writer, config.u32_momentum_period);
+    try calculateAndPrintWilliamsR(&filtered, allocator, writer, config.u32_williams_r_period);
 }
 
 /// Calculate and print SMA results
@@ -234,6 +242,66 @@ fn printStochastic(result: *const ohlcv.StochasticIndicator.StochasticResult, wr
         });
     }
     try writer.print("\n", .{});
+}
+
+/// Calculate and print WMA results
+fn calculateAndPrintWMA(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype, period: u32) !void {
+    const wma = ohlcv.WmaIndicator{ .u32_period = period };
+
+    var result = wma.calculate(series.*, allocator) catch |err| {
+        try writer.print("WMA({d}) Error: {any}\n\n", .{ period, err });
+        return;
+    };
+    defer result.deinit();
+
+    try writer.print("WMA({d}) Results:\n", .{period});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printLastValues(&result, writer, 5);
+}
+
+/// Calculate and print ROC results
+fn calculateAndPrintROC(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype, period: u32) !void {
+    const roc = ohlcv.RocIndicator{ .u32_period = period };
+
+    var result = roc.calculate(series.*, allocator) catch |err| {
+        try writer.print("ROC({d}) Error: {any}\n\n", .{ period, err });
+        return;
+    };
+    defer result.deinit();
+
+    try writer.print("ROC({d}) Results (%):\n", .{period});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printLastValues(&result, writer, 5);
+}
+
+/// Calculate and print Momentum results
+fn calculateAndPrintMomentum(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype, period: u32) !void {
+    const momentum = ohlcv.MomentumIndicator{ .u32_period = period };
+
+    var result = momentum.calculate(series.*, allocator) catch |err| {
+        try writer.print("Momentum({d}) Error: {any}\n\n", .{ period, err });
+        return;
+    };
+    defer result.deinit();
+
+    try writer.print("Momentum({d}) Results:\n", .{period});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printLastValues(&result, writer, 5);
+}
+
+/// Calculate and print Williams %R results
+fn calculateAndPrintWilliamsR(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype, period: u32) !void {
+    const williams_r = ohlcv.WilliamsRIndicator{ .u32_period = period };
+
+    var result = williams_r.calculate(series.*, allocator) catch |err| {
+        try writer.print("Williams %R({d}) Error: {any}\n\n", .{ period, err });
+        return;
+    };
+    defer result.deinit();
+
+    try writer.print("Williams %R({d}) Results:\n", .{period});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printLastValues(&result, writer, 5);
 }
 
 /// Parse date string to Unix timestamp

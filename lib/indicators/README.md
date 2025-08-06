@@ -12,18 +12,21 @@ This document lists common technical indicators used in financial analysis.
 *   [x] **ATR (Average True Range):** Measures market volatility
 *   [x] **Stochastic Oscillator:** Compares closing price to price range over a period
 
+**Recently Implemented:**
+
+*   [x] **WMA (Weighted Moving Average):** Moving average with linear weights
+*   [x] **ROC (Rate of Change):** Percentage change in price over a period
+*   [x] **Momentum:** Difference between current price and price n periods ago
+*   [x] **Williams %R:** Momentum oscillator, measures overbought/oversold levels
+
 **Planned / Not Implemented:**
 
-*   [ ] **WMA (Weighted Moving Average):** Moving average with linear weights
 *   [ ] **VWAP (Volume Weighted Average Price):** Average price weighted by volume
 *   [ ] **ADX (Average Directional Index):** Measures trend strength
 *   [ ] **CCI (Commodity Channel Index):** Measures price deviation from average
-*   [ ] **ROC (Rate of Change):** Percentage change in price over a period
-*   [ ] **Momentum:** Difference between current price and price n periods ago
 *   [ ] **OBV (On-Balance Volume):** Cumulative volume based on price movement direction
 *   [ ] **CMF (Chaikin Money Flow):** Volume-weighted average of accumulation/distribution
 *   [ ] **MFI (Money Flow Index):** RSI-type oscillator using price and volume
-*   [ ] **Williams %R:** Momentum oscillator, measures overbought/oversold levels
 *   [ ] **Parabolic SAR:** Trend-following indicator, trailing stop
 *   [ ] **Donchian Channels:** High/low bands over a period
 *   [ ] **Pivot Points:** Support/resistance levels based on OHLC

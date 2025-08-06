@@ -41,6 +41,10 @@ pub const BollingerBandsIndicator = @import("indicators/bollinger_bands_indicato
 pub const MacdIndicator = @import("indicators/macd_indicator.zig").MacdIndicator;
 pub const AtrIndicator = @import("indicators/atr_indicator.zig").AtrIndicator;
 pub const StochasticIndicator = @import("indicators/stochastic_indicator.zig").StochasticIndicator;
+pub const WmaIndicator = @import("indicators/wma_indicator.zig").WmaIndicator;
+pub const RocIndicator = @import("indicators/roc_indicator.zig").RocIndicator;
+pub const MomentumIndicator = @import("indicators/momentum_indicator.zig").MomentumIndicator;
+pub const WilliamsRIndicator = @import("indicators/williams_r_indicator.zig").WilliamsRIndicator;
 
 // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 
