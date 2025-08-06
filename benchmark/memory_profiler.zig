@@ -94,7 +94,7 @@ const ProfilingAllocator = struct {
 
 fn generateTestData(allocator: std.mem.Allocator, size: usize) ![]ohlcv.OhlcvRow {
     const data = try allocator.alloc(ohlcv.OhlcvRow, size);
-    
+
     for (data, 0..) |*row, i| {
         const base_price = 100.0 + @sin(@as(f64, @floatFromInt(i)) * 0.1) * 20.0;
         row.* = .{
@@ -106,7 +106,7 @@ fn generateTestData(allocator: std.mem.Allocator, size: usize) ![]ohlcv.OhlcvRow
             .u64_volume = 1000000,
         };
     }
-    
+
     return data;
 }
 
@@ -167,13 +167,13 @@ pub fn main() !void {
 
         const test_data = try generateTestData(allocator, size);
         defer allocator.free(test_data);
-        
+
         var series = try ohlcv.TimeSeries.fromSlice(allocator, test_data, false);
         defer series.deinit();
 
         for (indicators) |indicator_name| {
             if (std.mem.eql(u8, indicator_name, "MACD") and size < 50) continue;
-            
+
             try profileIndicator(allocator, series, indicator_name);
         }
     }
@@ -181,7 +181,7 @@ pub fn main() !void {
     // CSV Parser memory profiling
     std.debug.print("\n🔍 CSV Parser Memory Profile\n", .{});
     std.debug.print("{s}\n", .{"═" ** 50});
-    
+
     var parser_stats = MemoryStats{};
     var profiling_alloc = ProfilingAllocator.init(allocator, &parser_stats);
     const prof_allocator = profiling_alloc.allocator();

@@ -6,11 +6,11 @@ const print = std.debug.print;
 
 fn generateTestData(allocator: std.mem.Allocator, size: usize) ![]ohlcv.OhlcvRow {
     const data = try allocator.alloc(ohlcv.OhlcvRow, size);
-    
+
     var price: f64 = 100.0;
     for (data, 0..) |*row, i| {
         price += (@sin(@as(f64, @floatFromInt(i)) * 0.1) * 2.0);
-        
+
         row.* = .{
             .u64_timestamp = 1704067200 + i * 86400,
             .f64_open = price,
@@ -20,7 +20,7 @@ fn generateTestData(allocator: std.mem.Allocator, size: usize) ![]ohlcv.OhlcvRow
             .u64_volume = 1000000,
         };
     }
-    
+
     return data;
 }
 
@@ -30,18 +30,18 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     print("\n╔════════════════════════════════════════════════════════════════╗\n", .{});
-    print("║                     OHLCV Benchmark Results                   ║\n", .{});  
+    print("║                     OHLCV Benchmark Results                   ║\n", .{});
     print("╚════════════════════════════════════════════════════════════════╝\n\n", .{});
 
     const sizes = [_]usize{ 1000, 10000 };
-    
+
     for (sizes) |size| {
         print("📊 Dataset: {} data points\n", .{size});
         print("{s}\n", .{"─" ** 50});
 
         const test_data = try generateTestData(allocator, size);
         defer allocator.free(test_data);
-        
+
         var series = try ohlcv.TimeSeries.fromSlice(allocator, test_data, false);
         defer series.deinit();
 
@@ -52,19 +52,19 @@ pub fn main() !void {
             var result = try sma.calculate(series, allocator);
             result.deinit();
             const end = std.time.nanoTimestamp();
-            
+
             const duration_ms = @as(f64, @floatFromInt(end - start)) / 1_000_000.0;
             print("SMA-20:        {d:>8.3} ms\n", .{duration_ms});
         }
 
-        // Benchmark EMA  
+        // Benchmark EMA
         {
             const start = std.time.nanoTimestamp();
             const ema = ohlcv.EmaIndicator{ .u32_period = 20 };
             var result = try ema.calculate(series, allocator);
             result.deinit();
             const end = std.time.nanoTimestamp();
-            
+
             const duration_ms = @as(f64, @floatFromInt(end - start)) / 1_000_000.0;
             print("EMA-20:        {d:>8.3} ms\n", .{duration_ms});
         }
@@ -76,7 +76,7 @@ pub fn main() !void {
             var result = try rsi.calculate(series, allocator);
             result.deinit();
             const end = std.time.nanoTimestamp();
-            
+
             const duration_ms = @as(f64, @floatFromInt(end - start)) / 1_000_000.0;
             print("RSI-14:        {d:>8.3} ms\n", .{duration_ms});
         }
@@ -88,7 +88,7 @@ pub fn main() !void {
             var result = try bb.calculate(series, allocator);
             result.deinit();
             const end = std.time.nanoTimestamp();
-            
+
             const duration_ms = @as(f64, @floatFromInt(end - start)) / 1_000_000.0;
             print("Bollinger-20:  {d:>8.3} ms\n", .{duration_ms});
         }
@@ -100,7 +100,7 @@ pub fn main() !void {
             var result = try macd.calculate(series, allocator);
             result.deinit();
             const end = std.time.nanoTimestamp();
-            
+
             const duration_ms = @as(f64, @floatFromInt(end - start)) / 1_000_000.0;
             print("MACD:          {d:>8.3} ms\n", .{duration_ms});
         }
@@ -112,7 +112,7 @@ pub fn main() !void {
             var result = try atr.calculate(series, allocator);
             result.deinit();
             const end = std.time.nanoTimestamp();
-            
+
             const duration_ms = @as(f64, @floatFromInt(end - start)) / 1_000_000.0;
             print("ATR-14:        {d:>8.3} ms\n", .{duration_ms});
         }

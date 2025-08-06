@@ -5,7 +5,7 @@ const ohlcv = @import("ohlcv");
 
 fn generateTestData(allocator: std.mem.Allocator, size: usize) ![]ohlcv.OhlcvRow {
     const data = try allocator.alloc(ohlcv.OhlcvRow, size);
-    
+
     for (data, 0..) |*row, i| {
         const base_price = 100.0 + @sin(@as(f64, @floatFromInt(i)) * 0.1) * 20.0;
         row.* = .{
@@ -17,7 +17,7 @@ fn generateTestData(allocator: std.mem.Allocator, size: usize) ![]ohlcv.OhlcvRow
             .u64_volume = 1000000,
         };
     }
-    
+
     return data;
 }
 
@@ -48,7 +48,7 @@ pub fn main() !void {
 
         const test_data = try generateTestData(allocator, size);
         defer allocator.free(test_data);
-        
+
         var series = try ohlcv.TimeSeries.fromSlice(allocator, test_data, false);
         defer series.deinit();
 
@@ -58,16 +58,16 @@ pub fn main() !void {
             const sma = ohlcv.SmaIndicator{ .u32_period = 20 };
             var result = try sma.calculate(series, allocator);
             const end_time = std.time.nanoTimestamp();
-            
+
             const duration_ms = @as(f64, @floatFromInt(end_time - start_time)) / 1_000_000.0;
             const result_size = result.arr_values.len;
             const memory_per_point = @as(f64, @floatFromInt(result_size * @sizeOf(f64) * 2)) / 1024.0; // values + timestamps
-            
+
             std.debug.print("SMA-20:\n", .{});
             std.debug.print("  Duration: {d:>6.3} ms\n", .{duration_ms});
             std.debug.print("  Output points: {}\n", .{result_size});
             std.debug.print("  Memory used: ~{d:.2} KB\n", .{memory_per_point});
-            
+
             result.deinit();
         }
 
@@ -77,22 +77,22 @@ pub fn main() !void {
             const bb = ohlcv.BollingerBandsIndicator{ .u32_period = 20 };
             var result = try bb.calculate(series, allocator);
             const end_time = std.time.nanoTimestamp();
-            
+
             const duration_ms = @as(f64, @floatFromInt(end_time - start_time)) / 1_000_000.0;
             const result_size = result.upper_band.arr_values.len;
             const memory_per_point = @as(f64, @floatFromInt(result_size * @sizeOf(f64) * 6)) / 1024.0; // 3 bands * 2 arrays each
-            
+
             std.debug.print("Bollinger Bands:\n", .{});
             std.debug.print("  Duration: {d:>6.3} ms\n", .{duration_ms});
             std.debug.print("  Output points: {}\n", .{result_size});
             std.debug.print("  Memory used: ~{d:.2} KB (3 bands)\n", .{memory_per_point});
-            
+
             result.deinit();
         }
 
         // Test CSV Parser memory usage
         if (size == 1000) { // Only test once
-            const csv_data = 
+            const csv_data =
                 \\Date,Open,High,Low,Close,Volume
                 \\2024-01-01,100.0,110.0,95.0,105.0,1000000
                 \\2024-01-02,105.0,115.0,100.0,112.0,1200000
@@ -103,15 +103,15 @@ pub fn main() !void {
             const parser = ohlcv.CsvParser{ .allocator = allocator };
             var parsed_series = try parser.parse(csv_data);
             const end_time = std.time.nanoTimestamp();
-            
+
             const duration_ms = @as(f64, @floatFromInt(end_time - start_time)) / 1_000_000.0;
             const csv_memory = @as(f64, @floatFromInt(parsed_series.len() * @sizeOf(ohlcv.OhlcvRow))) / 1024.0;
-            
+
             std.debug.print("CSV Parser:\n", .{});
             std.debug.print("  Duration: {d:>6.3} ms\n", .{duration_ms});
             std.debug.print("  Parsed rows: {}\n", .{parsed_series.len()});
             std.debug.print("  Memory used: ~{d:.2} KB\n", .{csv_memory});
-            
+
             parsed_series.deinit();
         }
     }
@@ -121,7 +121,7 @@ pub fn main() !void {
     std.debug.print("• Single indicators (SMA, EMA, RSI): ~{d:.1} KB per 1K points\n", .{@as(f64, @floatFromInt(1000 * @sizeOf(f64) * 2)) / 1024.0});
     std.debug.print("• Multi-result indicators (BB, MACD): ~{d:.1} KB per 1K points\n", .{@as(f64, @floatFromInt(1000 * @sizeOf(f64) * 6)) / 1024.0});
     std.debug.print("• Raw OHLCV data: ~{d:.1} KB per 1K points\n", .{@as(f64, @floatFromInt(1000 * @sizeOf(ohlcv.OhlcvRow))) / 1024.0});
-    
+
     std.debug.print("\n💡 Tips for optimization:\n", .{});
     std.debug.print("• Use streaming calculations for large datasets\n", .{});
     std.debug.print("• Pre-allocate result arrays when size is known\n", .{});

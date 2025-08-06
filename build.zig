@@ -58,7 +58,7 @@ pub fn build(b: *std.Build) void {
 
     // ─── Advanced benchmark ───
     const adv_benchmark_exe = b.addExecutable(.{
-        .name = "benchmark-advanced", 
+        .name = "benchmark-advanced",
         .root_source_file = b.path("benchmark/benchmark_indicators.zig"),
         .target = target,
         .optimize = .ReleaseFast,

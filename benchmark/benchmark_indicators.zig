@@ -53,7 +53,7 @@ const BenchmarkSuite = struct {
 
 fn generateTestData(allocator: Allocator, size: usize) ![]ohlcv.OhlcvRow {
     const data = try allocator.alloc(ohlcv.OhlcvRow, size);
-    
+
     var rng = std.Random.DefaultPrng.init(42); // Fixed seed for reproducibility
     const random = rng.random();
 
@@ -77,7 +77,7 @@ fn generateTestData(allocator: Allocator, size: usize) ![]ohlcv.OhlcvRow {
             .u64_volume = 1000000 + random.uintAtMost(u64, 2000000),
         };
     }
-    
+
     return data;
 }
 
@@ -90,15 +90,15 @@ fn benchmarkIndicator(
     iterations: u32,
 ) !BenchmarkResult {
     const start_time = std.time.nanoTimestamp();
-    
+
     for (0..iterations) |_| {
         var result = try indicator.calculate(series, allocator);
         result.deinit();
     }
-    
+
     const end_time = std.time.nanoTimestamp();
     const duration = @as(u64, @intCast(end_time - start_time));
-    
+
     return BenchmarkResult{
         .name = name,
         .duration_ns = duration,
@@ -117,15 +117,15 @@ fn benchmarkMultiResultIndicator(
     iterations: u32,
 ) !BenchmarkResult {
     const start_time = std.time.nanoTimestamp();
-    
+
     for (0..iterations) |_| {
         var result = try indicator.calculate(series, allocator);
         result.deinit();
     }
-    
+
     const end_time = std.time.nanoTimestamp();
     const duration = @as(u64, @intCast(end_time - start_time));
-    
+
     return BenchmarkResult{
         .name = name,
         .duration_ns = duration,
@@ -145,24 +145,24 @@ pub fn main() !void {
 
     // Test different dataset sizes
     const dataset_sizes = [_]usize{ 100, 1000, 10000, 50000 };
-    
+
     for (dataset_sizes) |size| {
         std.debug.print("Benchmarking with {} data points...\n", .{size});
-        
+
         const test_data = try generateTestData(allocator, size);
         defer allocator.free(test_data);
-        
+
         var series = try ohlcv.TimeSeries.fromSlice(allocator, test_data, false);
         defer series.deinit();
 
         const iterations: u32 = if (size <= 1000) 1000 else if (size <= 10000) 100 else 10;
-        
+
         // Benchmark Simple Moving Average
         {
             const sma = ohlcv.SmaIndicator{ .u32_period = 20 };
             const name = try std.fmt.allocPrint(allocator, "SMA-20 ({} points)", .{size});
             defer allocator.free(name);
-            
+
             const result = try benchmarkIndicator(allocator, ohlcv.SmaIndicator, sma, series, name, iterations);
             try benchmark_suite.addResult(result);
         }
@@ -172,7 +172,7 @@ pub fn main() !void {
             const ema = ohlcv.EmaIndicator{ .u32_period = 20 };
             const name = try std.fmt.allocPrint(allocator, "EMA-20 ({} points)", .{size});
             defer allocator.free(name);
-            
+
             const result = try benchmarkIndicator(allocator, ohlcv.EmaIndicator, ema, series, name, iterations);
             try benchmark_suite.addResult(result);
         }
@@ -182,7 +182,7 @@ pub fn main() !void {
             const rsi = ohlcv.RsiIndicator{ .u32_period = 14 };
             const name = try std.fmt.allocPrint(allocator, "RSI-14 ({} points)", .{size});
             defer allocator.free(name);
-            
+
             const result = try benchmarkIndicator(allocator, ohlcv.RsiIndicator, rsi, series, name, iterations);
             try benchmark_suite.addResult(result);
         }
@@ -192,7 +192,7 @@ pub fn main() !void {
             const bb = ohlcv.BollingerBandsIndicator{ .u32_period = 20 };
             const name = try std.fmt.allocPrint(allocator, "BB-20 ({} points)", .{size});
             defer allocator.free(name);
-            
+
             const result = try benchmarkMultiResultIndicator(allocator, ohlcv.BollingerBandsIndicator, bb, series, name, iterations);
             try benchmark_suite.addResult(result);
         }
@@ -202,7 +202,7 @@ pub fn main() !void {
             const macd = ohlcv.MacdIndicator{ .u32_fast_period = 12, .u32_slow_period = 26, .u32_signal_period = 9 };
             const name = try std.fmt.allocPrint(allocator, "MACD ({} points)", .{size});
             defer allocator.free(name);
-            
+
             const result = try benchmarkMultiResultIndicator(allocator, ohlcv.MacdIndicator, macd, series, name, iterations);
             try benchmark_suite.addResult(result);
         }
@@ -212,7 +212,7 @@ pub fn main() !void {
             const atr = ohlcv.AtrIndicator{ .u32_period = 14 };
             const name = try std.fmt.allocPrint(allocator, "ATR-14 ({} points)", .{size});
             defer allocator.free(name);
-            
+
             const result = try benchmarkIndicator(allocator, ohlcv.AtrIndicator, atr, series, name, iterations);
             try benchmark_suite.addResult(result);
         }
@@ -222,7 +222,7 @@ pub fn main() !void {
             const stoch = ohlcv.StochasticIndicator{ .u32_k_period = 14, .u32_k_slowing = 3, .u32_d_period = 3 };
             const name = try std.fmt.allocPrint(allocator, "Stochastic ({} points)", .{size});
             defer allocator.free(name);
-            
+
             const result = try benchmarkMultiResultIndicator(allocator, ohlcv.StochasticIndicator, stoch, series, name, iterations);
             try benchmark_suite.addResult(result);
         }
