@@ -68,6 +68,14 @@ zig test test/unit/test_time_series.zig -I lib --dep ohlcv -Mohlcv=lib/ohlcv.zig
    - ✅ SMA calculation accuracy
    - ✅ EMA calculation accuracy
    - ✅ RSI calculation accuracy
+   - ✅ MACD multi-line results
+   - ✅ Bollinger Bands three-band results
+   - ✅ ATR volatility calculation
+   - ✅ Stochastic %K and %D lines
+   - ✅ Williams %R oscillator
+   - ✅ WMA weighted calculations
+   - ✅ ROC percentage changes
+   - ✅ Momentum price differences
    - ✅ Edge cases (period=0, insufficient data)
    - ✅ All gains/losses scenarios
    - ✅ Timestamp alignment
@@ -101,7 +109,7 @@ See `.github/workflows/test.yml` for details.
 
 1. Create test file in appropriate directory
 2. Follow naming convention: `test_<component>.zig`
-3. Use boxed comments for organization
+3. Use boxed comments and intelligent box labels for organization
 4. Import test helpers if needed
 5. Add to `test_all.zig` imports
 

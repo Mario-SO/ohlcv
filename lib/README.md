@@ -70,9 +70,17 @@ TimeSeries - Efficient container with:
 ```zig
 // ╔══════════════════════════════════════ Indicators ══════════════════════════════════════╗
 SmaIndicator - Simple Moving Average
-EmaIndicator - Exponential Moving Average
+EmaIndicator - Exponential Moving Average  
 RsiIndicator - Relative Strength Index
-// All return IndicatorResult with timestamps and values
+MacdIndicator - Moving Average Convergence Divergence
+BollingerBandsIndicator - Bollinger Bands (upper/middle/lower bands)
+AtrIndicator - Average True Range
+StochasticIndicator - Stochastic Oscillator (%K and %D)
+WilliamsRIndicator - Williams %R
+WmaIndicator - Weighted Moving Average
+RocIndicator - Rate of Change
+MomentumIndicator - Price Momentum
+// All return IndicatorResult or specialized result structures with timestamps and values
 // ╚════════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
@@ -134,6 +142,8 @@ const indicators = .{
     ohlcv.SmaIndicator{ .u32_period = 20 },
     ohlcv.EmaIndicator{ .u32_period = 12 },
     ohlcv.RsiIndicator{ .u32_period = 14 },
+    ohlcv.AtrIndicator{ .u32_period = 14 },
+    ohlcv.WmaIndicator{ .u32_period = 10 },
 };
 
 inline for (indicators) |indicator| {
@@ -156,20 +166,27 @@ inline for (indicators) |indicator| {
 
 ```zig
 // ╔══════════════════════════════════════ Custom Indicator ══════════════════════════════════════╗
-pub const MacdIndicator = struct {
-    u32_fast_period: u32 = 12,
-    u32_slow_period: u32 = 26,
-    u32_signal_period: u32 = 9,
+pub const CustomIndicator = struct {
+    const Self = @This();
+
+    // [box] Attributes
+    u32_period: u32 = 14,
+    f64_multiplier: f64 = 2.0,
+    // [box]
     
+    // [box] Error
     pub const Error = error{
         InsufficientData,
         InvalidParameters,
         OutOfMemory,
     };
+    // [box]
     
+    // [box] Calculate Custom Indicator
     pub fn calculate(self: Self, series: TimeSeries, allocator: Allocator) Error!IndicatorResult {
-        // Implementation...
+        // Implementation with proper box organization...
     }
+    // [box]
 };
 // ╚════════════════════════════════════════════════════════════════════════════════════════════╝
 ```

@@ -14,7 +14,7 @@ A modern Zig library for fetching and parsing Open-High-Low-Close-Volume (OHLCV)
 
 - **Time Series Management**: Efficient slicing, filtering, and operations
 
-- **Technical Indicators**: SMA, EMA, RSI with extensible framework
+- **Technical Indicators**: SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, Williams %R, WMA, ROC, Momentum with extensible framework
 
 - **Memory safe**: all allocations are explicit, easy to free
 
@@ -117,7 +117,7 @@ pub fn main() !void {
 
 - Parser: `CsvParser`
 
-- Indicators: `SmaIndicator`, `EmaIndicator`, `RsiIndicator`
+- Indicators: `SmaIndicator`, `EmaIndicator`, `RsiIndicator`, `MacdIndicator`, `BollingerBandsIndicator`, `AtrIndicator`, `StochasticIndicator`, `WilliamsRIndicator`, `WmaIndicator`, `RocIndicator`, `MomentumIndicator`
 
 - Convenience: `fetchPreset(source: PresetSource, allocator) !TimeSeries`
 
@@ -151,10 +151,18 @@ ohlcv/
       - http_data_source.zig
       - memory_data_source.zig
     - indicators/
+      - atr_indicator.zig
+      - bollinger_bands_indicator.zig
       - ema_indicator.zig
       - indicator_result.zig
+      - macd_indicator.zig
+      - momentum_indicator.zig
+      - roc_indicator.zig
       - rsi_indicator.zig
       - sma_indicator.zig
+      - stochastic_indicator.zig
+      - williams_r_indicator.zig
+      - wma_indicator.zig
     - ohlcv.zig
     - parser/
       - csv_parser.zig
