@@ -111,8 +111,10 @@ jobs:
       - name: Prepare benchmark artifacts
         run: |
           # Copy latest benchmark as the new baseline
-          cp profiling_results/benchmark_*.txt profiling_results/benchmark_latest.txt
-          cp profiling_results/memory_profile_*.txt profiling_results/memory_profile_latest.txt
+          LATEST_BENCHMARK=$(ls -t profiling_results/benchmark_*.txt | head -1)
+          LATEST_MEMORY=$(ls -t profiling_results/memory_profile_*.txt | head -1)
+          cp "$LATEST_BENCHMARK" profiling_results/benchmark_latest.txt
+          cp "$LATEST_MEMORY" profiling_results/memory_profile_latest.txt
           
           # Create summary report
           echo "# OHLCV Performance Report" > profiling_results/PERFORMANCE_SUMMARY.md
