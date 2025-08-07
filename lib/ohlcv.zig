@@ -45,6 +45,11 @@ pub const WmaIndicator = @import("indicators/wma_indicator.zig").WmaIndicator;
 pub const RocIndicator = @import("indicators/roc_indicator.zig").RocIndicator;
 pub const MomentumIndicator = @import("indicators/momentum_indicator.zig").MomentumIndicator;
 pub const WilliamsRIndicator = @import("indicators/williams_r_indicator.zig").WilliamsRIndicator;
+pub const VwapIndicator = @import("indicators/vwap_indicator.zig").VwapIndicator;
+pub const CciIndicator = @import("indicators/cci_indicator.zig").CciIndicator;
+pub const ObvIndicator = @import("indicators/obv_indicator.zig").ObvIndicator;
+pub const DonchianChannelsIndicator = @import("indicators/donchian_channels_indicator.zig").DonchianChannelsIndicator;
+pub const AroonIndicator = @import("indicators/aroon_indicator.zig").AroonIndicator;
 
 // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 

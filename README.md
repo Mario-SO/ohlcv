@@ -14,7 +14,7 @@ A modern Zig library for fetching and parsing Open-High-Low-Close-Volume (OHLCV)
 
 - **Time Series Management**: Efficient slicing, filtering, and operations
 
-- **Technical Indicators**: SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, Williams %R, WMA, ROC, Momentum with extensible framework
+- **Technical Indicators**: SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, Williams %R, WMA, ROC, Momentum, VWAP, CCI, OBV, Donchian Channels, Aroon with extensible framework
 
 - **Memory safe**: all allocations are explicit, easy to free
 
@@ -117,7 +117,7 @@ pub fn main() !void {
 
 - Parser: `CsvParser`
 
-- Indicators: `SmaIndicator`, `EmaIndicator`, `RsiIndicator`, `MacdIndicator`, `BollingerBandsIndicator`, `AtrIndicator`, `StochasticIndicator`, `WilliamsRIndicator`, `WmaIndicator`, `RocIndicator`, `MomentumIndicator`
+- Indicators: `SmaIndicator`, `EmaIndicator`, `RsiIndicator`, `MacdIndicator`, `BollingerBandsIndicator`, `AtrIndicator`, `StochasticIndicator`, `WilliamsRIndicator`, `WmaIndicator`, `RocIndicator`, `MomentumIndicator`, `VwapIndicator`, `CciIndicator`, `ObvIndicator`, `DonchianChannelsIndicator`, `AroonIndicator`
 
 - Convenience: `fetchPreset(source: PresetSource, allocator) !TimeSeries`
 
@@ -155,6 +155,11 @@ ohlcv/
       - bollinger_bands_indicator.zig
       - ema_indicator.zig
       - indicator_result.zig
+      - vwap_indicator.zig
+      - cci_indicator.zig
+      - obv_indicator.zig
+      - donchian_channels_indicator.zig
+      - aroon_indicator.zig
       - macd_indicator.zig
       - momentum_indicator.zig
       - roc_indicator.zig

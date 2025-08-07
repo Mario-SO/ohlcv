@@ -51,6 +51,26 @@ This document lists common technical indicators used in financial analysis. All 
     - Momentum oscillator, measures overbought/oversold levels
     - Default period: 14, configurable
 
+*   [x] **VWAP (Volume Weighted Average Price)** - `VwapIndicator`
+    - Cumulative average price weighted by volume using typical price
+    - No parameters
+
+*   [x] **CCI (Commodity Channel Index)** - `CciIndicator`
+    - (TP - SMA(TP)) / (0.015 * MeanDeviation), where TP is typical price
+    - Default period: 20, configurable
+
+*   [x] **OBV (On-Balance Volume)** - `ObvIndicator`
+    - Cumulative volume added/subtracted based on price moves
+    - No parameters
+
+*   [x] **Donchian Channels** - `DonchianChannelsIndicator`
+    - Upper: highest high, Lower: lowest low, Middle: average of upper/lower
+    - Default period: 20, configurable
+
+*   [x] **Aroon Indicator** - `AroonIndicator`
+    - Measures time since highest high/lowest low (Up/Down lines)
+    - Default period: 25, configurable
+
 ## 🔮 Code Organization
 
 All indicators follow a consistent structure with intelligent box labels:
@@ -106,20 +126,19 @@ defer stoch_result.deinit(); // Cleans up both lines
 
 ## 🔧 Planned / Not Implemented:
 
-*   [ ] **VWAP (Volume Weighted Average Price):** Average price weighted by volume
 *   [ ] **ADX (Average Directional Index):** Measures trend strength
-*   [ ] **CCI (Commodity Channel Index):** Measures price deviation from average
-*   [ ] **OBV (On-Balance Volume):** Cumulative volume based on price movement direction
+*   [ ] **ADX (Average Directional Index):** Measures trend strength
+*   [ ] **CMF (Chaikin Money Flow):** Volume-weighted average of accumulation/distribution
+*   [ ] **MFI (Money Flow Index):** RSI-type oscillator using price and volume
 *   [ ] **CMF (Chaikin Money Flow):** Volume-weighted average of accumulation/distribution
 *   [ ] **MFI (Money Flow Index):** RSI-type oscillator using price and volume
 *   [ ] **Parabolic SAR:** Trend-following indicator, trailing stop
-*   [ ] **Donchian Channels:** High/low bands over a period
+*   [ ] **Pivot Points:** Support/resistance levels based on OHLC
 *   [ ] **Pivot Points:** Support/resistance levels based on OHLC
 *   [ ] **Keltner Channels:** Volatility-based envelopes set above/below EMA
 *   [ ] **TRIX (Triple Exponential Average):** Oscillator showing percent rate of change of a triple EMA
 *   [ ] **Ultimate Oscillator:** Combines short, medium, and long-term price action
 *   [ ] **DMI (Directional Movement Index):** Includes ADX, +DI, and -DI components
-*   [ ] **Aroon Indicator:** Measures time since highest high/lowest low
 *   [ ] **Elder Ray Index:** Bull and bear power based on EMA
 *   [ ] **Stochastic RSI:** RSI applied to RSI values, more sensitive
 *   [ ] **Ichimoku Cloud:** Multiple averages, support/resistance, trend and momentum

@@ -2,6 +2,7 @@
 
 const std = @import("std");
 const ohlcv = @import("lib/ohlcv.zig");
+const date = @import("lib/date.zig");
 
 /// Demo configuration
 const Config = struct {
@@ -17,6 +18,9 @@ const Config = struct {
     u32_roc_period: u32 = 12,
     u32_momentum_period: u32 = 10,
     u32_williams_r_period: u32 = 14,
+    u32_cci_period: u32 = 20,
+    u32_donchian_period: u32 = 20,
+    u32_aroon_period: u32 = 25,
 };
 
 /// Run analysis on a dataset
@@ -37,8 +41,8 @@ fn runAnalysis(allocator: std.mem.Allocator, writer: anytype, dataset: ohlcv.Pre
     try writer.print("Total rows: {d}\n", .{series.len()});
 
     // Filter by date range
-    const from_ts = try parseDate(config.str_from_date);
-    const to_ts = try parseDate(config.str_to_date);
+    const from_ts = try date.parseDateYmd(config.str_from_date);
+    const to_ts = try date.parseDateYmd(config.str_to_date);
 
     var filtered = try series.sliceByTime(from_ts, to_ts);
     defer filtered.deinit();
@@ -57,6 +61,11 @@ fn runAnalysis(allocator: std.mem.Allocator, writer: anytype, dataset: ohlcv.Pre
     try calculateAndPrintROC(&filtered, allocator, writer, config.u32_roc_period);
     try calculateAndPrintMomentum(&filtered, allocator, writer, config.u32_momentum_period);
     try calculateAndPrintWilliamsR(&filtered, allocator, writer, config.u32_williams_r_period);
+    try calculateAndPrintVWAP(&filtered, allocator, writer);
+    try calculateAndPrintCCI(&filtered, allocator, writer, config.u32_cci_period);
+    try calculateAndPrintOBV(&filtered, allocator, writer);
+    try calculateAndPrintDonchian(&filtered, allocator, writer, config.u32_donchian_period);
+    try calculateAndPrintAroon(&filtered, allocator, writer, config.u32_aroon_period);
 }
 
 /// Calculate and print SMA results
@@ -203,6 +212,27 @@ fn printBollingerBands(result: *const ohlcv.BollingerBandsIndicator.BollingerBan
     try writer.print("\n", .{});
 }
 
+/// Print Donchian Channels values
+fn printDonchian(result: *const ohlcv.DonchianChannelsIndicator.DonchianResult, writer: anytype, n: usize) !void {
+    const len = result.middle_band.len();
+    const start = if (len > n) len - n else 0;
+    const end = len;
+
+    try writer.print("Timestamp         | Upper     | Middle    | Lower\n", .{});
+    try writer.print("──────────────────┼───────────┼───────────┼───────────\n", .{});
+
+    var i = start;
+    while (i < end) : (i += 1) {
+        try writer.print("{d:17} │ {d:9.2} │ {d:9.2} │ {d:9.2}\n", .{
+            result.middle_band.arr_timestamps[i],
+            result.upper_band.arr_values[i],
+            result.middle_band.arr_values[i],
+            result.lower_band.arr_values[i],
+        });
+    }
+    try writer.print("\n", .{});
+}
+
 /// Print MACD values
 fn printMACD(result: *const ohlcv.MacdIndicator.MacdResult, writer: anytype, n: usize) !void {
     const len = result.macd_line.len();
@@ -239,6 +269,26 @@ fn printStochastic(result: *const ohlcv.StochasticIndicator.StochasticResult, wr
             result.k_percent.arr_timestamps[i],
             result.k_percent.arr_values[i],
             result.d_percent.arr_values[i],
+        });
+    }
+    try writer.print("\n", .{});
+}
+
+/// Print Aroon values
+fn printAroon(result: *const ohlcv.AroonIndicator.AroonResult, writer: anytype, n: usize) !void {
+    const len = result.aroon_up.len();
+    const start = if (len > n) len - n else 0;
+    const end = len;
+
+    try writer.print("Timestamp         | Aroon Up  | Aroon Down\n", .{});
+    try writer.print("──────────────────┼───────────┼───────────\n", .{});
+
+    var i = start;
+    while (i < end) : (i += 1) {
+        try writer.print("{d:17} │ {d:9.2} │ {d:9.2}\n", .{
+            result.aroon_up.arr_timestamps[i],
+            result.aroon_up.arr_values[i],
+            result.aroon_down.arr_values[i],
         });
     }
     try writer.print("\n", .{});
@@ -304,42 +354,82 @@ fn calculateAndPrintWilliamsR(series: *ohlcv.TimeSeries, allocator: std.mem.Allo
     try printLastValues(&result, writer, 5);
 }
 
-/// Parse date string to Unix timestamp
-fn parseDate(date_str: []const u8) !u64 {
-    if (date_str.len != 10 or date_str[4] != '-' or date_str[7] != '-') {
-        return error.InvalidDateFormat;
-    }
+/// Calculate and print VWAP results
+fn calculateAndPrintVWAP(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype) !void {
+    const vwap = ohlcv.VwapIndicator{};
 
-    const year = try std.fmt.parseInt(u16, date_str[0..4], 10);
-    const month = try std.fmt.parseInt(u8, date_str[5..7], 10);
-    const day = try std.fmt.parseInt(u8, date_str[8..10], 10);
+    var result = vwap.calculate(series.*, allocator) catch |err| {
+        try writer.print("VWAP Error: {any}\n\n", .{err});
+        return;
+    };
+    defer result.deinit();
 
-    // Simple date to timestamp conversion
-    var days: u64 = 0;
-
-    // Add years
-    var y: u16 = 1970;
-    while (y < year) : (y += 1) {
-        days += if (isLeapYear(y)) 366 else 365;
-    }
-
-    // Add months
-    const days_in_month = [_]u8{ 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-    var m: u8 = 1;
-    while (m < month) : (m += 1) {
-        days += days_in_month[m];
-        if (m == 2 and isLeapYear(year)) days += 1;
-    }
-
-    // Add days
-    days += day - 1;
-
-    return days * 24 * 60 * 60;
+    try writer.print("VWAP Results:\n", .{});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printLastValues(&result, writer, 5);
 }
 
-fn isLeapYear(year: u16) bool {
-    return (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0);
+/// Calculate and print CCI results
+fn calculateAndPrintCCI(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype, period: u32) !void {
+    const cci = ohlcv.CciIndicator{ .u32_period = period };
+
+    var result = cci.calculate(series.*, allocator) catch |err| {
+        try writer.print("CCI({d}) Error: {any}\n\n", .{ period, err });
+        return;
+    };
+    defer result.deinit();
+
+    try writer.print("CCI({d}) Results:\n", .{period});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printLastValues(&result, writer, 5);
 }
+
+/// Calculate and print OBV results
+fn calculateAndPrintOBV(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype) !void {
+    const obv = ohlcv.ObvIndicator{};
+
+    var result = obv.calculate(series.*, allocator) catch |err| {
+        try writer.print("OBV Error: {any}\n\n", .{err});
+        return;
+    };
+    defer result.deinit();
+
+    try writer.print("OBV Results:\n", .{});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printLastValues(&result, writer, 5);
+}
+
+/// Calculate and print Donchian Channels results
+fn calculateAndPrintDonchian(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype, period: u32) !void {
+    const don = ohlcv.DonchianChannelsIndicator{ .u32_period = period };
+
+    var result = don.calculate(series.*, allocator) catch |err| {
+        try writer.print("Donchian({d}) Error: {any}\n\n", .{ period, err });
+        return;
+    };
+    defer result.deinit();
+
+    try writer.print("Donchian Channels({d}) Results:\n", .{period});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printDonchian(&result, writer, 5);
+}
+
+/// Calculate and print Aroon results
+fn calculateAndPrintAroon(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype, period: u32) !void {
+    const aroon = ohlcv.AroonIndicator{ .u32_period = period };
+
+    var result = aroon.calculate(series.*, allocator) catch |err| {
+        try writer.print("Aroon({d}) Error: {any}\n\n", .{ period, err });
+        return;
+    };
+    defer result.deinit();
+
+    try writer.print("Aroon({d}) Results:\n", .{period});
+    try writer.print("─────────────────────────────────\n", .{});
+    try printAroon(&result, writer, 5);
+}
+
+// Date helpers moved to lib/date.zig
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};

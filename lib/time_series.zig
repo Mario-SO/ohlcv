@@ -72,27 +72,21 @@ pub const TimeSeries = struct {
 
     /// Create a slice by timestamp range (zero-copy view)
     pub fn sliceByTime(self: Self, u64_from: u64, u64_to: u64) !Self {
-        var start_idx: ?usize = null;
-        var end_idx: ?usize = null;
-
-        // Binary search for efficiency on sorted data
-        for (self.arr_rows, 0..) |row, i| {
-            if (start_idx == null and row.u64_timestamp >= u64_from) {
-                start_idx = i;
-            }
-            if (row.u64_timestamp > u64_to) {
-                end_idx = i;
-                break;
-            }
-        }
-
-        if (start_idx == null) {
+        if (self.arr_rows.len == 0 or u64_from > u64_to) {
             return Self.init(self.allocator);
         }
 
-        const actual_end = end_idx orelse self.arr_rows.len;
+        const start_idx = lowerBoundTimestamp(self.arr_rows, u64_from);
+        if (start_idx >= self.arr_rows.len) {
+            return Self.init(self.allocator);
+        }
+        const end_idx_exclusive = upperBoundTimestamp(self.arr_rows, u64_to);
+        if (end_idx_exclusive <= start_idx) {
+            return Self.init(self.allocator);
+        }
+
         return .{
-            .arr_rows = self.arr_rows[start_idx.?..actual_end],
+            .arr_rows = self.arr_rows[start_idx..end_idx_exclusive],
             .allocator = self.allocator,
             .b_owns_memory = false, // View into parent data
         };
@@ -116,13 +110,43 @@ pub const TimeSeries = struct {
         };
     }
 
-    /// Sort by timestamp in-place
+    /// Sort by timestamp in-place (standard library sort)
     pub fn sortByTime(self: *Self) void {
-        std.sort.insertion(OhlcvRow, self.arr_rows, {}, struct {
+        std.mem.sort(OhlcvRow, self.arr_rows, {}, struct {
             fn lessThan(_: void, a: OhlcvRow, b: OhlcvRow) bool {
                 return a.u64_timestamp < b.u64_timestamp;
             }
         }.lessThan);
+    }
+
+    /// Find first index with timestamp >= target
+    fn lowerBoundTimestamp(rows: []const OhlcvRow, target: u64) usize {
+        var left: usize = 0;
+        var right: usize = rows.len; // exclusive
+        while (left < right) {
+            const mid = left + (right - left) / 2;
+            if (rows[mid].u64_timestamp < target) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+        return left;
+    }
+
+    /// Find first index with timestamp > target
+    fn upperBoundTimestamp(rows: []const OhlcvRow, target: u64) usize {
+        var left: usize = 0;
+        var right: usize = rows.len; // exclusive
+        while (left < right) {
+            const mid = left + (right - left) / 2;
+            if (rows[mid].u64_timestamp <= target) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+        return left;
     }
 
     // └───────────────────────────────────────────────────────────────────────────────────────────────┘

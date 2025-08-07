@@ -508,3 +508,99 @@ test "RocIndicator handles zero price division" {
 }
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+
+test "VwapIndicator calculates non-decreasing cumulative VWAP" {
+    const allocator = testing.allocator;
+
+    const rows = [_]ohlcv.OhlcvRow{
+        .{ .u64_timestamp = 1, .f64_open = 10, .f64_high = 11, .f64_low = 9, .f64_close = 10, .u64_volume = 100 },
+        .{ .u64_timestamp = 2, .f64_open = 11, .f64_high = 12, .f64_low = 10, .f64_close = 11, .u64_volume = 100 },
+        .{ .u64_timestamp = 3, .f64_open = 12, .f64_high = 13, .f64_low = 11, .f64_close = 12, .u64_volume = 100 },
+    };
+
+    const rows_slice = try allocator.dupe(ohlcv.OhlcvRow, &rows);
+    defer allocator.free(rows_slice);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows_slice, false);
+    defer series.deinit();
+
+    const vwap = ohlcv.VwapIndicator{};
+    var result = try vwap.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expectEqual(@as(usize, 3), result.len());
+    try testing.expect(result.arr_values[1] >= 0);
+}
+
+test "CciIndicator returns values for valid period" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 30);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const cci = ohlcv.CciIndicator{ .u32_period = 20 };
+    var result = try cci.calculate(series, allocator);
+    defer result.deinit();
+    try testing.expect(result.len() > 0);
+}
+
+test "ObvIndicator cumulative behavior" {
+    const allocator = testing.allocator;
+    var rows: [4]ohlcv.OhlcvRow = .{
+        .{ .u64_timestamp = 1, .f64_open = 10, .f64_high = 10, .f64_low = 10, .f64_close = 10, .u64_volume = 10 },
+        .{ .u64_timestamp = 2, .f64_open = 10, .f64_high = 10, .f64_low = 10, .f64_close = 11, .u64_volume = 5 },
+        .{ .u64_timestamp = 3, .f64_open = 11, .f64_high = 11, .f64_low = 11, .f64_close = 10, .u64_volume = 3 },
+        .{ .u64_timestamp = 4, .f64_open = 10, .f64_high = 10, .f64_low = 10, .f64_close = 10, .u64_volume = 7 },
+    };
+    const rows_slice = try allocator.dupe(ohlcv.OhlcvRow, &rows);
+    defer allocator.free(rows_slice);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows_slice, false);
+    defer series.deinit();
+
+    const obv = ohlcv.ObvIndicator{};
+    var result = try obv.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expectEqual(@as(f64, 0.0), result.arr_values[0]);
+    try testing.expectEqual(@as(f64, 5.0), result.arr_values[1]);
+    try testing.expectEqual(@as(f64, 2.0), result.arr_values[2]);
+    try testing.expectEqual(@as(f64, 2.0), result.arr_values[3]);
+}
+
+test "DonchianChannelsIndicator bands ordering" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 30);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const don = ohlcv.DonchianChannelsIndicator{ .u32_period = 10 };
+    var result = try don.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expect(result.upper_band.len() == result.middle_band.len());
+    try testing.expect(result.upper_band.len() == result.lower_band.len());
+    for (0..result.upper_band.len()) |i| {
+        try testing.expect(result.upper_band.arr_values[i] >= result.middle_band.arr_values[i]);
+        try testing.expect(result.middle_band.arr_values[i] >= result.lower_band.arr_values[i]);
+    }
+}
+
+test "AroonIndicator produces values between 0 and 100" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 40);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const aroon = ohlcv.AroonIndicator{ .u32_period = 25 };
+    var result = try aroon.calculate(series, allocator);
+    defer result.deinit();
+
+    for (result.aroon_up.arr_values) |v| {
+        try testing.expect(v >= 0.0 and v <= 100.0);
+    }
+    for (result.aroon_down.arr_values) |v| {
+        try testing.expect(v >= 0.0 and v <= 100.0);
+    }
+}

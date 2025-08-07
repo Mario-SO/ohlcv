@@ -80,6 +80,11 @@ WilliamsRIndicator - Williams %R
 WmaIndicator - Weighted Moving Average
 RocIndicator - Rate of Change
 MomentumIndicator - Price Momentum
+VwapIndicator - Volume Weighted Average Price (cumulative)
+CciIndicator - Commodity Channel Index
+ObvIndicator - On-Balance Volume (cumulative)
+DonchianChannelsIndicator - Donchian upper/middle/lower bands
+AroonIndicator - Aroon Up/Down
 // All return IndicatorResult or specialized result structures with timestamps and values
 // ╚════════════════════════════════════════════════════════════════════════════════════════╝
 ```

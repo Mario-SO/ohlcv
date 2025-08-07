@@ -4,6 +4,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const OhlcvRow = @import("../types/ohlcv_row.zig").OhlcvRow;
 const TimeSeries = @import("../time_series.zig").TimeSeries;
+const date = @import("../date.zig");
 
 // ┌──────────────────────────────────────────── Error ────────────────────────────────────────────┐
 
@@ -36,22 +37,21 @@ pub const CsvParser = struct {
         var rows = std.ArrayList(OhlcvRow).init(self.allocator);
         errdefer rows.deinit();
 
-        // Pre-allocate based on estimated rows
-        const estimated_rows = data.len / 50; // Rough estimate
-        try rows.ensureTotalCapacity(estimated_rows);
+        // Exact pre-allocation based on line count (minus optional header)
+        const total_lines = std.mem.count(u8, data, "\n") + 1; // rough for last line w/o newline
+        const capacity_hint = if (self.b_skip_header and total_lines > 0) total_lines - 1 else total_lines;
+        try rows.ensureTotalCapacity(capacity_hint);
 
-        var line_iter = std.mem.tokenizeAny(u8, data, "\n\r");
-
-        // Skip header if requested
-        if (self.b_skip_header) {
-            _ = line_iter.next();
-        }
-
-        while (line_iter.next()) |line| {
+        var it = std.mem.splitAny(u8, data, "\r\n");
+        var header_skipped = !self.b_skip_header;
+        while (it.next()) |line| {
             if (line.len == 0) continue;
+            if (!header_skipped) {
+                header_skipped = true;
+                continue;
+            }
 
-            const row = self.parseLine(line) catch |err| {
-                // Skip invalid lines based on error type
+            const row = parseLineFast(line) catch |err| {
                 switch (err) {
                     ParseError.DateBeforeEpoch => continue,
                     ParseError.InvalidFormat => continue,
@@ -61,16 +61,11 @@ pub const CsvParser = struct {
                 }
             };
 
-            // Validate data if requested
             if (self.b_validate_data) {
-                if (row.f64_open == 0 or row.f64_high == 0 or
-                    row.f64_low == 0 or row.f64_close == 0 or
-                    row.u64_volume == 0)
-                {
+                if (row.f64_open == 0 or row.f64_high == 0 or row.f64_low == 0 or row.f64_close == 0 or row.u64_volume == 0) {
                     continue;
                 }
             }
-
             try rows.append(row);
         }
 
@@ -82,79 +77,58 @@ pub const CsvParser = struct {
 
     // ┌─────────────────────────────────── Parse a single CSV line ───────────────────────────────────┐
 
-    /// Parse a single CSV line
-    fn parseLine(self: Self, line: []const u8) !OhlcvRow {
-        _ = self;
-        var fields = std.mem.tokenizeScalar(u8, line, ',');
+    /// Parse a single CSV line (no quotes). Requires at least 6 columns; extra columns are ignored.
+    fn parseLineFast(line: []const u8) !OhlcvRow {
+        var idx: usize = 0;
+        var col: u8 = 0;
+        var start: usize = 0;
 
-        const date_str = fields.next() orelse return ParseError.InvalidFormat;
-        const open_str = fields.next() orelse return ParseError.InvalidFormat;
-        const high_str = fields.next() orelse return ParseError.InvalidFormat;
-        const low_str = fields.next() orelse return ParseError.InvalidFormat;
-        const close_str = fields.next() orelse return ParseError.InvalidFormat;
-        const volume_str = fields.next() orelse return ParseError.InvalidFormat;
+        var date_slice: []const u8 = &[_]u8{};
+        var open_slice: []const u8 = &[_]u8{};
+        var high_slice: []const u8 = &[_]u8{};
+        var low_slice: []const u8 = &[_]u8{};
+        var close_slice: []const u8 = &[_]u8{};
+        var volume_slice: []const u8 = &[_]u8{};
 
-        return .{
-            .u64_timestamp = try parseDate(date_str),
-            .f64_open = std.fmt.parseFloat(f64, open_str) catch return ParseError.InvalidNumber,
-            .f64_high = std.fmt.parseFloat(f64, high_str) catch return ParseError.InvalidNumber,
-            .f64_low = std.fmt.parseFloat(f64, low_str) catch return ParseError.InvalidNumber,
-            .f64_close = std.fmt.parseFloat(f64, close_str) catch return ParseError.InvalidNumber,
-            .u64_volume = std.fmt.parseInt(u64, volume_str, 10) catch return ParseError.InvalidNumber,
+        while (idx <= line.len) : (idx += 1) {
+            if (idx == line.len or line[idx] == ',') {
+                const field = line[start..idx];
+                if (col <= 5) {
+                    switch (col) {
+                        0 => date_slice = field,
+                        1 => open_slice = field,
+                        2 => high_slice = field,
+                        3 => low_slice = field,
+                        4 => close_slice = field,
+                        5 => volume_slice = field,
+                        else => unreachable,
+                    }
+                } else {
+                    // ignore extra columns
+                }
+                col += 1;
+                start = idx + 1;
+            }
+        }
+
+        if (col < 6) return ParseError.InvalidFormat;
+
+        const ts = date.parseDateYmd(date_slice) catch |e| switch (e) {
+            error.InvalidTimestamp => return ParseError.InvalidTimestamp,
+            error.DateBeforeEpoch => return ParseError.DateBeforeEpoch,
         };
+
+        const open = std.fmt.parseFloat(f64, open_slice) catch return ParseError.InvalidNumber;
+        const high = std.fmt.parseFloat(f64, high_slice) catch return ParseError.InvalidNumber;
+        const low = std.fmt.parseFloat(f64, low_slice) catch return ParseError.InvalidNumber;
+        const close = std.fmt.parseFloat(f64, close_slice) catch return ParseError.InvalidNumber;
+        const volume = std.fmt.parseInt(u64, volume_slice, 10) catch return ParseError.InvalidNumber;
+
+        return .{ .u64_timestamp = ts, .f64_open = open, .f64_high = high, .f64_low = low, .f64_close = close, .u64_volume = volume };
     }
 
     // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 
-    // ┌───────────────────────────── Parse YYYY-MM-DD to Unix timestamp ──────────────────────────────┐
-
-    /// Parse YYYY-MM-DD to Unix timestamp
-    fn parseDate(date_str: []const u8) !u64 {
-        if (date_str.len != 10 or date_str[4] != '-' or date_str[7] != '-') {
-            return ParseError.InvalidTimestamp;
-        }
-
-        const year = try std.fmt.parseInt(u16, date_str[0..4], 10);
-        const month = try std.fmt.parseInt(u8, date_str[5..7], 10);
-        const day = try std.fmt.parseInt(u8, date_str[8..10], 10);
-
-        if (year < 1970) return ParseError.DateBeforeEpoch;
-        if (month == 0 or month > 12 or day == 0 or day > 31) {
-            return ParseError.InvalidTimestamp;
-        }
-
-        // Calculate days since epoch
-        var days_since_epoch: u64 = 0;
-
-        // Add years
-        var y: u16 = 1970;
-        while (y < year) : (y += 1) {
-            days_since_epoch += if (isLeapYear(y)) 366 else 365;
-        }
-
-        // Add months
-        const days_in_month = [_]u8{ 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-        var m: u8 = 1;
-        while (m < month) : (m += 1) {
-            days_since_epoch += days_in_month[m];
-            if (m == 2 and isLeapYear(year)) days_since_epoch += 1;
-        }
-
-        // Add days
-        days_since_epoch += day - 1;
-
-        return days_since_epoch * 24 * 60 * 60;
-    }
-
-    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
-
-    // ┌───────────────────────────── Helper: Check if year is leap year ──────────────────────────────┐
-
-    fn isLeapYear(year: u16) bool {
-        return (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0);
-    }
-
-    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 };
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
