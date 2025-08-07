@@ -2,7 +2,7 @@
 
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const OhlcvRow = @import("types/ohlcv_row.zig").OhlcvRow;
+const OhlcvRow = @import("../types/ohlcv_row.zig").OhlcvRow;
 
 /// Efficient container for time series data with zero-copy operations where possible
 pub const TimeSeries = struct {

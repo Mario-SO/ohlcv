@@ -20,7 +20,7 @@ pub const MemoryDataSource = @import("data_source/memory_data_source.zig").Memor
 
 // ┌───────────────────────────────────────── Time Series ─────────────────────────────────────────┐
 
-pub const TimeSeries = @import("time_series.zig").TimeSeries;
+pub const TimeSeries = @import("utils/time_series.zig").TimeSeries;
 
 // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 
