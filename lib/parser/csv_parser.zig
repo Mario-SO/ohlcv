@@ -3,8 +3,8 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const OhlcvRow = @import("../types/ohlcv_row.zig").OhlcvRow;
-const TimeSeries = @import("../time_series.zig").TimeSeries;
-const date = @import("../date.zig");
+const TimeSeries = @import("../utils/time_series.zig").TimeSeries;
+const date = @import("../utils/date.zig");
 
 // ┌──────────────────────────────────────────── Error ────────────────────────────────────────────┐
 

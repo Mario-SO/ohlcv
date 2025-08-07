@@ -2,7 +2,7 @@
 
 const std = @import("std");
 const ohlcv = @import("lib/ohlcv.zig");
-const date = @import("lib/date.zig");
+const date = @import("lib/utils/date.zig");
 
 /// Demo configuration
 const Config = struct {
@@ -428,8 +428,6 @@ fn calculateAndPrintAroon(series: *ohlcv.TimeSeries, allocator: std.mem.Allocato
     try writer.print("─────────────────────────────────\n", .{});
     try printAroon(&result, writer, 5);
 }
-
-// Date helpers moved to lib/date.zig
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};

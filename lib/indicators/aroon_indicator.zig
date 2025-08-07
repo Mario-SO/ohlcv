@@ -2,7 +2,7 @@
 
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const TimeSeries = @import("../time_series.zig").TimeSeries;
+const TimeSeries = @import("../utils/time_series.zig").TimeSeries;
 const IndicatorResult = @import("indicator_result.zig").IndicatorResult;
 
 pub const AroonIndicator = struct {
