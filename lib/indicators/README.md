@@ -127,7 +127,6 @@ defer stoch_result.deinit(); // Cleans up both lines
 ## 🔧 Planned / Not Implemented:
 
 *   [ ] **ADX (Average Directional Index):** Measures trend strength
-*   [ ] **ADX (Average Directional Index):** Measures trend strength
 *   [ ] **CMF (Chaikin Money Flow):** Volume-weighted average of accumulation/distribution
 *   [ ] **MFI (Money Flow Index):** RSI-type oscillator using price and volume
 *   [ ] **CMF (Chaikin Money Flow):** Volume-weighted average of accumulation/distribution
