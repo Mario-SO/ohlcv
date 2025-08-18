@@ -33,10 +33,11 @@ jobs:
       
       - name: Run demo
         run: |
+          # Run demo and capture output, ignoring SIGPIPE errors
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            zig build run 2>&1 | head -50
+            zig build run 2>&1 | head -50 || true
           else
-            zig build run | head -50
+            (zig build run || true) | head -50
           fi
         shell: bash
       

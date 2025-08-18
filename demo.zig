@@ -912,13 +912,28 @@ pub fn main() !void {
     const datasets = [_]ohlcv.PresetSource{ .btc_usd, .sp500 };
 
     for (datasets) |dataset| {
-        try runAnalysis(allocator, stdout_writer, dataset, config);
+        runAnalysis(allocator, stdout_writer, dataset, config) catch |err| {
+            // Handle broken pipe gracefully (common in CI when piping to head)
+            if (err == error.BrokenPipe) {
+                return;
+            }
+            return err;
+        };
     }
 
     // Demonstrate custom data source
-    try stdout_writer.print("\n══════════════════════════════════════════\n", .{});
-    try stdout_writer.print("Custom Data Source Example\n", .{});
-    try stdout_writer.print("══════════════════════════════════════════\n\n", .{});
+    stdout_writer.print("\n══════════════════════════════════════════\n", .{}) catch |err| {
+        if (err == error.BrokenPipe) return;
+        return err;
+    };
+    stdout_writer.print("Custom Data Source Example\n", .{}) catch |err| {
+        if (err == error.BrokenPipe) return;
+        return err;
+    };
+    stdout_writer.print("══════════════════════════════════════════\n\n", .{}) catch |err| {
+        if (err == error.BrokenPipe) return;
+        return err;
+    };
 
     const sample_csv =
         \\Date,Open,High,Low,Close,Volume
@@ -939,11 +954,17 @@ pub fn main() !void {
     var custom_series = try parser.parse(data);
     defer custom_series.deinit();
 
-    try stdout_writer.print("Parsed {d} rows from custom data\n", .{custom_series.len()});
-    try stdout_writer.print("First row: timestamp={d}, close={d:.2}\n", .{
+    stdout_writer.print("Parsed {d} rows from custom data\n", .{custom_series.len()}) catch |err| {
+        if (err == error.BrokenPipe) return;
+        return err;
+    };
+    stdout_writer.print("First row: timestamp={d}, close={d:.2}\n", .{
         custom_series.arr_rows[0].u64_timestamp,
         custom_series.arr_rows[0].f64_close,
-    });
+    }) catch |err| {
+        if (err == error.BrokenPipe) return;
+        return err;
+    };
 }
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
