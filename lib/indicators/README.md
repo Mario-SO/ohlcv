@@ -124,25 +124,74 @@ var stoch_result = try stoch.calculate(series, allocator);
 defer stoch_result.deinit(); // Cleans up both lines
 ```
 
-## 🔧 Planned / Not Implemented:
+## ✅ All Indicators Now Implemented!
 
-*   [ ] **ADX (Average Directional Index):** Measures trend strength
-*   [ ] **CMF (Chaikin Money Flow):** Volume-weighted average of accumulation/distribution
-*   [ ] **MFI (Money Flow Index):** RSI-type oscillator using price and volume
-*   [ ] **CMF (Chaikin Money Flow):** Volume-weighted average of accumulation/distribution
-*   [ ] **MFI (Money Flow Index):** RSI-type oscillator using price and volume
-*   [ ] **Parabolic SAR:** Trend-following indicator, trailing stop
-*   [ ] **Pivot Points:** Support/resistance levels based on OHLC
-*   [ ] **Pivot Points:** Support/resistance levels based on OHLC
-*   [ ] **Keltner Channels:** Volatility-based envelopes set above/below EMA
-*   [ ] **TRIX (Triple Exponential Average):** Oscillator showing percent rate of change of a triple EMA
-*   [ ] **Ultimate Oscillator:** Combines short, medium, and long-term price action
-*   [ ] **DMI (Directional Movement Index):** Includes ADX, +DI, and -DI components
-*   [ ] **Elder Ray Index:** Bull and bear power based on EMA
-*   [ ] **Stochastic RSI:** RSI applied to RSI values, more sensitive
-*   [ ] **Ichimoku Cloud:** Multiple averages, support/resistance, trend and momentum
-*   [ ] **Heikin Ashi Candles:** Smoothed candlestick representation
-*   [ ] **Price Channels:** High and low price over a period
-*   [ ] **Force Index:** Combines price and volume to show buying/selling pressure
-*   [ ] **Accumulation/Distribution Line:** Measures supply and demand using price and volume
-*   [ ] **Zig Zag Indicator:** Filters out smaller price movements to identify trends
+### Recently Added Indicators:
+
+*   [x] **ADX (Average Directional Index)** - `AdxIndicator`
+    - Measures trend strength with +DI and -DI components
+    - Default period: 14, configurable
+
+*   [x] **CMF (Chaikin Money Flow)** - `CmfIndicator`
+    - Volume-weighted average of accumulation/distribution
+    - Default period: 20, configurable
+
+*   [x] **MFI (Money Flow Index)** - `MfiIndicator`
+    - RSI-type oscillator using price and volume
+    - Default period: 14, configurable
+
+*   [x] **Parabolic SAR** - `ParabolicSarIndicator`
+    - Trend-following indicator, trailing stop
+    - Default AF: 0.02, increment: 0.02, max: 0.20, all configurable
+
+*   [x] **Pivot Points** - `PivotPointsIndicator`
+    - Support/resistance levels (P, S1, S2, R1, R2) based on OHLC
+    - No parameters
+
+*   [x] **Keltner Channels** - `KeltnerChannelsIndicator`
+    - Volatility-based envelopes set above/below EMA using ATR
+    - Default EMA period: 20, ATR period: 10, multiplier: 2.0, all configurable
+
+*   [x] **TRIX (Triple Exponential Average)** - `TrixIndicator`
+    - Oscillator showing percent rate of change of a triple EMA
+    - Default period: 14, configurable
+
+*   [x] **Ultimate Oscillator** - `UltimateOscillatorIndicator`
+    - Combines short, medium, and long-term price action
+    - Default periods: 7, 14, 28, all configurable
+
+*   [x] **DMI (Directional Movement Index)** - `DmiIndicator`
+    - Includes ADX, +DI, and -DI components for trend analysis
+    - Default period: 14, configurable
+
+*   [x] **Elder Ray Index** - `ElderRayIndicator`
+    - Bull and bear power based on EMA
+    - Default EMA period: 13, configurable
+
+*   [x] **Stochastic RSI** - `StochasticRsiIndicator`
+    - RSI applied to RSI values, more sensitive
+    - Default RSI period: 14, stochastic period: 14, both configurable
+
+*   [x] **Ichimoku Cloud** - `IchimokuCloudIndicator`
+    - Multiple averages, support/resistance, trend and momentum
+    - Default periods: tenkan=9, kijun=26, senkou=52, displacement=26, all configurable
+
+*   [x] **Heikin Ashi Candles** - `HeikinAshiIndicator`
+    - Smoothed candlestick representation
+    - No parameters
+
+*   [x] **Price Channels** - `PriceChannelsIndicator`
+    - High and low price over a period with middle channel
+    - Default period: 20, configurable
+
+*   [x] **Force Index** - `ForceIndexIndicator`
+    - Combines price and volume to show buying/selling pressure
+    - Default EMA period: 13, configurable
+
+*   [x] **Accumulation/Distribution Line** - `AccumulationDistributionIndicator`
+    - Measures supply and demand using price and volume
+    - No parameters
+
+*   [x] **Zig Zag Indicator** - `ZigZagIndicator`
+    - Filters out smaller price movements to identify trends
+    - Default threshold: 5.0%, configurable

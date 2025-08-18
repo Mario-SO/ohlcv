@@ -14,7 +14,7 @@ A modern Zig library for fetching and parsing Open-High-Low-Close-Volume (OHLCV)
 
 - **Time Series Management**: Efficient slicing, filtering, and operations
 
-- **Technical Indicators**: SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, Williams %R, WMA, ROC, Momentum, VWAP, CCI, OBV, Donchian Channels, Aroon with extensible framework
+- **37 Technical Indicators**: Complete suite including trend (SMA, EMA, ADX), momentum (RSI, MACD, Stochastic), volatility (Bollinger Bands, ATR, Keltner Channels), volume (OBV, MFI, CMF), and advanced systems (Ichimoku Cloud, Heikin Ashi)
 
 - **Memory safe**: all allocations are explicit, easy to free
 
@@ -117,7 +117,7 @@ pub fn main() !void {
 
 - Parser: `CsvParser`
 
-- Indicators: `SmaIndicator`, `EmaIndicator`, `RsiIndicator`, `MacdIndicator`, `BollingerBandsIndicator`, `AtrIndicator`, `StochasticIndicator`, `WilliamsRIndicator`, `WmaIndicator`, `RocIndicator`, `MomentumIndicator`, `VwapIndicator`, `CciIndicator`, `ObvIndicator`, `DonchianChannelsIndicator`, `AroonIndicator`
+- **37 Indicators**: Including trend analysis (SMA, EMA, WMA, ADX, DMI, Parabolic SAR), momentum oscillators (RSI, MACD, Stochastic, Stochastic RSI, Ultimate Oscillator, TRIX), volatility bands (Bollinger Bands, Keltner Channels, Donchian Channels, Price Channels), volume analysis (OBV, MFI, CMF, Force Index, A/D Line), and advanced systems (Ichimoku Cloud, Heikin Ashi, Pivot Points, Elder Ray, Aroon, Zig Zag)
 
 - Convenience: `fetchPreset(source: PresetSource, allocator) !TimeSeries`
 
@@ -150,24 +150,11 @@ ohlcv/
       - file_data_source.zig
       - http_data_source.zig
       - memory_data_source.zig
-    - indicators/
-      - atr_indicator.zig
-      - bollinger_bands_indicator.zig
-      - ema_indicator.zig
+    - indicators/         # 37 technical indicators
       - indicator_result.zig
-      - vwap_indicator.zig
-      - cci_indicator.zig
-      - obv_indicator.zig
-      - donchian_channels_indicator.zig
-      - aroon_indicator.zig
-      - macd_indicator.zig
-      - momentum_indicator.zig
-      - roc_indicator.zig
-      - rsi_indicator.zig
-      - sma_indicator.zig
-      - stochastic_indicator.zig
-      - williams_r_indicator.zig
-      - wma_indicator.zig
+      - [Single-line indicators: SMA, EMA, WMA, RSI, ATR, ROC, Momentum, etc.]
+      - [Multi-line indicators: MACD, Bollinger Bands, Ichimoku Cloud, etc.]
+      - README.md         # Complete indicator documentation
     - ohlcv.zig
     - parser/
       - csv_parser.zig

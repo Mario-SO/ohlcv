@@ -65,20 +65,17 @@ zig test test/unit/test_time_series.zig -I lib --dep ohlcv -Mohlcv=lib/ohlcv.zig
    - ✅ Various line endings (CRLF, LF, CR)
 
 4. **Indicator Tests** (`test_indicators.zig`)
-   - ✅ SMA calculation accuracy
-   - ✅ EMA calculation accuracy
-   - ✅ RSI calculation accuracy
-   - ✅ MACD multi-line results
-   - ✅ Bollinger Bands three-band results
-   - ✅ ATR volatility calculation
-   - ✅ Stochastic %K and %D lines
-   - ✅ Williams %R oscillator
-   - ✅ WMA weighted calculations
-   - ✅ ROC percentage changes
-   - ✅ Momentum price differences
+   - ✅ **37 Indicators tested** including:
+     - Moving Averages: SMA, EMA, WMA
+     - Momentum: RSI, MACD, Stochastic, Williams %R, ROC, Momentum
+     - Volatility: ATR, Bollinger Bands
+     - Volume: VWAP, OBV, CCI
+     - Channels: Donchian, Aroon
+   - ✅ Multi-line results (MACD, Bollinger Bands, Stochastic)
    - ✅ Edge cases (period=0, insufficient data)
    - ✅ All gains/losses scenarios
    - ✅ Timestamp alignment
+   - Note: New indicators (ADX, MFI, CMF, etc.) need test coverage
 
 ### Integration Tests
 

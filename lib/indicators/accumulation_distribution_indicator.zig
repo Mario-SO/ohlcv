@@ -1,0 +1,74 @@
+// ╔═══════════════════════════════ Accumulation/Distribution Line Indicator ══════════════════════════════════╗
+
+const std = @import("std");
+const Allocator = std.mem.Allocator;
+const TimeSeries = @import("../utils/time_series.zig").TimeSeries;
+const IndicatorResult = @import("indicator_result.zig").IndicatorResult;
+
+pub const AccumulationDistributionIndicator = struct {
+    const Self = @This();
+
+    // ┌──────────────────────────────────────────── Error ────────────────────────────────────────────┐
+
+    pub const Error = error{
+        InsufficientData,
+        OutOfMemory,
+        InvalidPriceData,
+    };
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+    // ┌─────────────────────────────── Calculate Accumulation/Distribution Line ─────────────────────────────────┐
+
+    /// A/D Line measures supply and demand using price and volume.
+    /// Formula: 
+    /// 1. Money Flow Multiplier = ((Close - Low) - (High - Close)) / (High - Low)
+    /// 2. Money Flow Volume = Money Flow Multiplier × Volume
+    /// 3. A/D Line = Running cumulative sum of Money Flow Volume
+    pub fn calculate(self: Self, series: TimeSeries, allocator: Allocator) Error!IndicatorResult {
+        _ = self;
+        if (series.len() == 0) return Error.InsufficientData;
+
+        var values = try allocator.alloc(f64, series.len());
+        errdefer allocator.free(values);
+
+        var timestamps = try allocator.alloc(u64, series.len());
+        errdefer allocator.free(timestamps);
+
+        var ad_line: f64 = 0.0;
+        var i: usize = 0;
+        while (i < series.len()) : (i += 1) {
+            const row = series.arr_rows[i];
+            const high = row.f64_high;
+            const low = row.f64_low;
+            const close = row.f64_close;
+            const volume = @as(f64, @floatFromInt(row.u64_volume));
+
+            // Calculate Money Flow Multiplier
+            // If high == low, avoid division by zero and set multiplier to 0
+            var money_flow_multiplier: f64 = 0.0;
+            if (high != low) {
+                money_flow_multiplier = ((close - low) - (high - close)) / (high - low);
+            }
+
+            // Calculate Money Flow Volume
+            const money_flow_volume = money_flow_multiplier * volume;
+
+            // Add to cumulative A/D Line
+            ad_line += money_flow_volume;
+
+            values[i] = ad_line;
+            timestamps[i] = row.u64_timestamp;
+        }
+
+        return .{
+            .arr_values = values,
+            .arr_timestamps = timestamps,
+            .allocator = allocator,
+        };
+    }
+
+    // └───────────────────────────────────────────────────────────────────────────────────────────────┘
+};
+
+// ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝

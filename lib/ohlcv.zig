@@ -34,22 +34,43 @@ pub const ParseError = @import("parser/csv_parser.zig").ParseError;
 // ┌───────────────────────────────────────── Indicators ──────────────────────────────────────────┐
 
 pub const IndicatorResult = @import("indicators/indicator_result.zig").IndicatorResult;
-pub const SmaIndicator = @import("indicators/sma_indicator.zig").SmaIndicator;
-pub const EmaIndicator = @import("indicators/ema_indicator.zig").EmaIndicator;
-pub const RsiIndicator = @import("indicators/rsi_indicator.zig").RsiIndicator;
-pub const BollingerBandsIndicator = @import("indicators/bollinger_bands_indicator.zig").BollingerBandsIndicator;
-pub const MacdIndicator = @import("indicators/macd_indicator.zig").MacdIndicator;
+
+// Single-line indicators
+pub const AccumulationDistributionIndicator = @import("indicators/accumulation_distribution_indicator.zig").AccumulationDistributionIndicator;
 pub const AtrIndicator = @import("indicators/atr_indicator.zig").AtrIndicator;
-pub const StochasticIndicator = @import("indicators/stochastic_indicator.zig").StochasticIndicator;
-pub const WmaIndicator = @import("indicators/wma_indicator.zig").WmaIndicator;
-pub const RocIndicator = @import("indicators/roc_indicator.zig").RocIndicator;
-pub const MomentumIndicator = @import("indicators/momentum_indicator.zig").MomentumIndicator;
-pub const WilliamsRIndicator = @import("indicators/williams_r_indicator.zig").WilliamsRIndicator;
-pub const VwapIndicator = @import("indicators/vwap_indicator.zig").VwapIndicator;
 pub const CciIndicator = @import("indicators/cci_indicator.zig").CciIndicator;
+pub const CmfIndicator = @import("indicators/cmf_indicator.zig").CmfIndicator;
+pub const EmaIndicator = @import("indicators/ema_indicator.zig").EmaIndicator;
+pub const ForceIndexIndicator = @import("indicators/force_index_indicator.zig").ForceIndexIndicator;
+pub const MfiIndicator = @import("indicators/mfi_indicator.zig").MfiIndicator;
+pub const MomentumIndicator = @import("indicators/momentum_indicator.zig").MomentumIndicator;
 pub const ObvIndicator = @import("indicators/obv_indicator.zig").ObvIndicator;
-pub const DonchianChannelsIndicator = @import("indicators/donchian_channels_indicator.zig").DonchianChannelsIndicator;
+pub const ParabolicSarIndicator = @import("indicators/parabolic_sar_indicator.zig").ParabolicSarIndicator;
+pub const RocIndicator = @import("indicators/roc_indicator.zig").RocIndicator;
+pub const RsiIndicator = @import("indicators/rsi_indicator.zig").RsiIndicator;
+pub const SmaIndicator = @import("indicators/sma_indicator.zig").SmaIndicator;
+pub const StochasticRsiIndicator = @import("indicators/stochastic_rsi_indicator.zig").StochasticRsiIndicator;
+pub const TrixIndicator = @import("indicators/trix_indicator.zig").TrixIndicator;
+pub const UltimateOscillatorIndicator = @import("indicators/ultimate_oscillator_indicator.zig").UltimateOscillatorIndicator;
+pub const VwapIndicator = @import("indicators/vwap_indicator.zig").VwapIndicator;
+pub const WilliamsRIndicator = @import("indicators/williams_r_indicator.zig").WilliamsRIndicator;
+pub const WmaIndicator = @import("indicators/wma_indicator.zig").WmaIndicator;
+pub const ZigZagIndicator = @import("indicators/zig_zag_indicator.zig").ZigZagIndicator;
+
+// Multi-line indicators
+pub const AdxIndicator = @import("indicators/adx_indicator.zig").AdxIndicator;
 pub const AroonIndicator = @import("indicators/aroon_indicator.zig").AroonIndicator;
+pub const BollingerBandsIndicator = @import("indicators/bollinger_bands_indicator.zig").BollingerBandsIndicator;
+pub const DmiIndicator = @import("indicators/dmi_indicator.zig").DmiIndicator;
+pub const DonchianChannelsIndicator = @import("indicators/donchian_channels_indicator.zig").DonchianChannelsIndicator;
+pub const ElderRayIndicator = @import("indicators/elder_ray_indicator.zig").ElderRayIndicator;
+pub const HeikinAshiIndicator = @import("indicators/heikin_ashi_indicator.zig").HeikinAshiIndicator;
+pub const IchimokuCloudIndicator = @import("indicators/ichimoku_cloud_indicator.zig").IchimokuCloudIndicator;
+pub const KeltnerChannelsIndicator = @import("indicators/keltner_channels_indicator.zig").KeltnerChannelsIndicator;
+pub const MacdIndicator = @import("indicators/macd_indicator.zig").MacdIndicator;
+pub const PivotPointsIndicator = @import("indicators/pivot_points_indicator.zig").PivotPointsIndicator;
+pub const PriceChannelsIndicator = @import("indicators/price_channels_indicator.zig").PriceChannelsIndicator;
+pub const StochasticIndicator = @import("indicators/stochastic_indicator.zig").StochasticIndicator;
 
 // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 

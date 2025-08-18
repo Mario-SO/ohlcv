@@ -65,27 +65,48 @@ TimeSeries - Efficient container with:
 // ╚═════════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-### 4. Indicators
+### 4. Indicators (37 Total)
 
 ```zig
 // ╔══════════════════════════════════════ Indicators ══════════════════════════════════════╗
-SmaIndicator - Simple Moving Average
+
+// Single-line indicators (return IndicatorResult):
+AccumulationDistributionIndicator - A/D Line measuring supply and demand
+AtrIndicator - Average True Range (volatility)
+CciIndicator - Commodity Channel Index
+CmfIndicator - Chaikin Money Flow
 EmaIndicator - Exponential Moving Average  
+ForceIndexIndicator - Force Index (price and volume)
+MfiIndicator - Money Flow Index (volume-weighted RSI)
+MomentumIndicator - Price Momentum
+ObvIndicator - On-Balance Volume (cumulative)
+ParabolicSarIndicator - Parabolic SAR (trailing stop)
+RocIndicator - Rate of Change
 RsiIndicator - Relative Strength Index
-MacdIndicator - Moving Average Convergence Divergence
-BollingerBandsIndicator - Bollinger Bands (upper/middle/lower bands)
-AtrIndicator - Average True Range
-StochasticIndicator - Stochastic Oscillator (%K and %D)
+SmaIndicator - Simple Moving Average
+StochasticRsiIndicator - Stochastic applied to RSI
+TrixIndicator - Triple Exponential Average oscillator
+UltimateOscillatorIndicator - Combines multiple timeframes
+VwapIndicator - Volume Weighted Average Price
 WilliamsRIndicator - Williams %R
 WmaIndicator - Weighted Moving Average
-RocIndicator - Rate of Change
-MomentumIndicator - Price Momentum
-VwapIndicator - Volume Weighted Average Price (cumulative)
-CciIndicator - Commodity Channel Index
-ObvIndicator - On-Balance Volume (cumulative)
-DonchianChannelsIndicator - Donchian upper/middle/lower bands
-AroonIndicator - Aroon Up/Down
-// All return IndicatorResult or specialized result structures with timestamps and values
+ZigZagIndicator - Filters minor price movements
+
+// Multi-line indicators (return specialized structures):
+AdxIndicator - ADX with +DI and -DI (AdxResult)
+AroonIndicator - Aroon Up/Down (AroonResult)
+BollingerBandsIndicator - Upper/middle/lower bands (BollingerBandsResult)
+DmiIndicator - Full DMI system (DmiResult)
+DonchianChannelsIndicator - Channel bands (DonchianResult)
+ElderRayIndicator - Bull and bear power (ElderRayResult)
+HeikinAshiIndicator - Smoothed candles (HeikinAshiResult)
+IchimokuCloudIndicator - 5-component system (IchimokuCloudResult)
+KeltnerChannelsIndicator - ATR-based channels (KeltnerChannelsResult)
+MacdIndicator - MACD line, signal, histogram (MacdResult)
+PivotPointsIndicator - Support/resistance levels (PivotPointsResult)
+PriceChannelsIndicator - High/low channels (PriceChannelsResult)
+StochasticIndicator - %K and %D lines (StochasticResult)
+
 // ╚════════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
