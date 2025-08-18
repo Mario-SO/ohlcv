@@ -1,5 +1,9 @@
 # 📊 OHLCV Zig Library
 
+[![CI](https://github.com/Mario-SO/ohlcv/actions/workflows/ci.yml/badge.svg)](https://github.com/Mario-SO/ohlcv/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Zig Version](https://img.shields.io/badge/Zig-0.14.0+-orange.svg)](https://ziglang.org/)
+
 A modern Zig library for fetching and parsing Open-High-Low-Close-Volume (OHLCV) financial data from remote CSV files—no API keys or registration required.
 
 ---
@@ -323,4 +327,10 @@ ohlcv/
 
 ---
 
-MIT License 
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+**Made with ❤️ using Zig** 
