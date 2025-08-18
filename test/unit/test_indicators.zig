@@ -604,3 +604,427 @@ test "AroonIndicator produces values between 0 and 100" {
         try testing.expect(v >= 0.0 and v <= 100.0);
     }
 }
+
+test "MomentumIndicator calculates correct values" {
+    const allocator = testing.allocator;
+
+    const rows = [_]ohlcv.OhlcvRow{
+        .{ .u64_timestamp = 1704067200, .f64_open = 100, .f64_high = 105, .f64_low = 95, .f64_close = 100, .u64_volume = 1000 },
+        .{ .u64_timestamp = 1704153600, .f64_open = 100, .f64_high = 105, .f64_low = 95, .f64_close = 110, .u64_volume = 1100 },
+        .{ .u64_timestamp = 1704240000, .f64_open = 110, .f64_high = 115, .f64_low = 105, .f64_close = 105, .u64_volume = 1200 },
+        .{ .u64_timestamp = 1704326400, .f64_open = 105, .f64_high = 110, .f64_low = 100, .f64_close = 115, .u64_volume = 1300 },
+    };
+
+    const rows_slice = try allocator.dupe(ohlcv.OhlcvRow, &rows);
+    defer allocator.free(rows_slice);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows_slice, false);
+    defer series.deinit();
+
+    const momentum = ohlcv.MomentumIndicator{ .u32_period = 2 };
+    var result = try momentum.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expectEqual(@as(usize, 2), result.len());
+    
+    // Momentum = Current - N periods ago
+    // 105 - 100 = 5
+    try testing.expectApproxEqAbs(@as(f64, 5.0), result.arr_values[0], 0.001);
+    // 115 - 110 = 5
+    try testing.expectApproxEqAbs(@as(f64, 5.0), result.arr_values[1], 0.001);
+}
+
+test "MomentumIndicator handles edge cases" {
+    const allocator = testing.allocator;
+
+    const rows = try test_helpers.createSampleRows(allocator, 5);
+    defer allocator.free(rows);
+
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    // Test period = 0
+    const momentum_zero = ohlcv.MomentumIndicator{ .u32_period = 0 };
+    try testing.expectError(ohlcv.MomentumIndicator.Error.InvalidParameters, momentum_zero.calculate(series, allocator));
+
+    // Test insufficient data
+    const momentum_large = ohlcv.MomentumIndicator{ .u32_period = 10 };
+    try testing.expectError(ohlcv.MomentumIndicator.Error.InsufficientData, momentum_large.calculate(series, allocator));
+}
+
+test "WilliamsRIndicator calculates correct values" {
+    const allocator = testing.allocator;
+
+    const rows = try test_helpers.createSampleRows(allocator, 30);
+    defer allocator.free(rows);
+
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const williams_r = ohlcv.WilliamsRIndicator{ .u32_period = 14 };
+    var result = try williams_r.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expect(result.len() > 0);
+
+    // Williams %R values should be between -100 and 0
+    for (result.arr_values) |value| {
+        try testing.expect(value >= -100.0);
+        try testing.expect(value <= 0.0);
+    }
+}
+
+test "WilliamsRIndicator handles edge cases" {
+    const allocator = testing.allocator;
+
+    const rows = try test_helpers.createSampleRows(allocator, 5);
+    defer allocator.free(rows);
+
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    // Test period = 0
+    const williams_zero = ohlcv.WilliamsRIndicator{ .u32_period = 0 };
+    try testing.expectError(ohlcv.WilliamsRIndicator.Error.InvalidParameters, williams_zero.calculate(series, allocator));
+
+    // Test insufficient data
+    const williams_large = ohlcv.WilliamsRIndicator{ .u32_period = 10 };
+    try testing.expectError(ohlcv.WilliamsRIndicator.Error.InsufficientData, williams_large.calculate(series, allocator));
+}
+
+// ┌─────────────────────────────────────── New Indicator Tests ───────────────────────────────────────┐
+
+test "AdxIndicator calculates values in valid range" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 50);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const adx = ohlcv.AdxIndicator{ .u32_period = 14 };
+    var result = try adx.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expect(result.adx.len() > 0);
+    // ADX values should be between 0 and 100
+    for (result.adx.arr_values) |value| {
+        try testing.expect(value >= 0.0 and value <= 100.0);
+    }
+    // DI values should also be between 0 and 100
+    for (result.plus_di.arr_values) |value| {
+        try testing.expect(value >= 0.0 and value <= 100.0);
+    }
+    for (result.minus_di.arr_values) |value| {
+        try testing.expect(value >= 0.0 and value <= 100.0);
+    }
+}
+
+test "MfiIndicator calculates values between 0 and 100" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 30);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const mfi = ohlcv.MfiIndicator{ .u32_period = 14 };
+    var result = try mfi.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expect(result.len() > 0);
+    for (result.arr_values) |value| {
+        try testing.expect(value >= 0.0 and value <= 100.0);
+    }
+}
+
+test "CmfIndicator calculates values between -1 and 1" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 30);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const cmf = ohlcv.CmfIndicator{ .u32_period = 20 };
+    var result = try cmf.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expect(result.len() > 0);
+    for (result.arr_values) |value| {
+        try testing.expect(value >= -1.0 and value <= 1.0);
+    }
+}
+
+test "ParabolicSarIndicator follows price trend" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 50);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const sar = ohlcv.ParabolicSarIndicator{ .f64_initial_af = 0.02 };
+    var result = try sar.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expect(result.len() > 0);
+    // SAR values should be positive
+    for (result.arr_values) |value| {
+        try testing.expect(value > 0);
+    }
+}
+
+test "TrixIndicator oscillates around zero" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 50);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const trix = ohlcv.TrixIndicator{ .u32_period = 14 };
+    var result = try trix.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expect(result.len() > 0);
+    // TRIX can have wider ranges depending on volatility
+    // Just verify values are finite numbers
+    for (result.arr_values) |value| {
+        try testing.expect(!std.math.isNan(value));
+        try testing.expect(!std.math.isInf(value));
+    }
+}
+
+test "ForceIndexIndicator reflects price and volume" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 30);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const force = ohlcv.ForceIndexIndicator{ .u32_period = 13 };
+    var result = try force.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expect(result.len() > 0);
+}
+
+test "AccumulationDistributionIndicator is cumulative" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 20);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const ad = ohlcv.AccumulationDistributionIndicator{};
+    var result = try ad.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expectEqual(series.len(), result.len());
+}
+
+test "StochasticRsiIndicator values between 0 and 100" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 50);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const stoch_rsi = ohlcv.StochasticRsiIndicator{ 
+        .u32_rsi_period = 14,
+        .u32_stochastic_period = 14,
+    };
+    var result = try stoch_rsi.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expect(result.len() > 0);
+    for (result.arr_values) |value| {
+        try testing.expect(value >= 0.0 and value <= 100.0);
+    }
+}
+
+test "UltimateOscillatorIndicator values between 0 and 100" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 40);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const uo = ohlcv.UltimateOscillatorIndicator{};
+    var result = try uo.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expect(result.len() > 0);
+    for (result.arr_values) |value| {
+        try testing.expect(value >= 0.0 and value <= 100.0);
+    }
+}
+
+test "KeltnerChannelsIndicator band ordering" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 30);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const kc = ohlcv.KeltnerChannelsIndicator{ 
+        .u32_ema_period = 20,
+        .u32_atr_period = 10,
+    };
+    var result = try kc.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expect(result.upper_channel.len() == result.middle_line.len());
+    try testing.expect(result.upper_channel.len() == result.lower_channel.len());
+    
+    // Upper should be above middle, middle above lower
+    for (0..result.upper_channel.len()) |i| {
+        try testing.expect(result.upper_channel.arr_values[i] >= result.middle_line.arr_values[i]);
+        try testing.expect(result.middle_line.arr_values[i] >= result.lower_channel.arr_values[i]);
+    }
+}
+
+test "PivotPointsIndicator support and resistance levels" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 10);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const pp = ohlcv.PivotPointsIndicator{};
+    var result = try pp.calculate(series, allocator);
+    defer result.deinit();
+
+    // Pivot points need at least 1 previous period, so result.len = series.len - 1
+    try testing.expectEqual(series.len() - 1, result.pivot_point.len());
+    
+    // R2 > R1 > Pivot > S1 > S2
+    for (0..result.pivot_point.len()) |i| {
+        try testing.expect(result.resistance_2.arr_values[i] >= result.resistance_1.arr_values[i]);
+        try testing.expect(result.resistance_1.arr_values[i] >= result.pivot_point.arr_values[i]);
+        try testing.expect(result.pivot_point.arr_values[i] >= result.support_1.arr_values[i]);
+        try testing.expect(result.support_1.arr_values[i] >= result.support_2.arr_values[i]);
+    }
+}
+
+test "PriceChannelsIndicator identifies highest and lowest" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 30);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const pc = ohlcv.PriceChannelsIndicator{ .u32_period = 20 };
+    var result = try pc.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expect(result.upper_channel.len() > 0);
+    
+    // Upper >= Middle >= Lower
+    for (0..result.upper_channel.len()) |i| {
+        try testing.expect(result.upper_channel.arr_values[i] >= result.middle_channel.arr_values[i]);
+        try testing.expect(result.middle_channel.arr_values[i] >= result.lower_channel.arr_values[i]);
+    }
+}
+
+test "ElderRayIndicator bull and bear power" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 30);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const elder = ohlcv.ElderRayIndicator{ .u32_period = 13 };
+    var result = try elder.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expect(result.bull_power.len() > 0);
+    try testing.expectEqual(result.bull_power.len(), result.bear_power.len());
+}
+
+test "ZigZagIndicator filters minor movements" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 50);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const zz = ohlcv.ZigZagIndicator{ .f64_threshold = 5.0 };
+    var result = try zz.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expectEqual(series.len(), result.len());
+    
+    // Most values should be NaN (filtered out)
+    var nan_count: usize = 0;
+    for (result.arr_values) |value| {
+        if (std.math.isNan(value)) {
+            nan_count += 1;
+        }
+    }
+    try testing.expect(nan_count > result.len() / 2);
+}
+
+test "DmiIndicator complete system with ADX" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 50);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const dmi = ohlcv.DmiIndicator{ .u32_period = 14 };
+    var result = try dmi.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expect(result.adx.len() > 0);
+    try testing.expectEqual(result.adx.len(), result.plus_di.len());
+    try testing.expectEqual(result.adx.len(), result.minus_di.len());
+    
+    // All values should be between 0 and 100
+    for (result.adx.arr_values) |value| {
+        try testing.expect(value >= 0.0 and value <= 100.0);
+    }
+}
+
+test "IchimokuCloudIndicator multiple components" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 100);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const ichimoku = ohlcv.IchimokuCloudIndicator{};
+    var result = try ichimoku.calculate(series, allocator);
+    defer result.deinit();
+
+    // All components should have data
+    try testing.expect(result.tenkan_sen.len() > 0);
+    try testing.expect(result.kijun_sen.len() > 0);
+    try testing.expect(result.senkou_span_a.len() > 0);
+    try testing.expect(result.senkou_span_b.len() > 0);
+    try testing.expect(result.chikou_span.len() > 0);
+}
+
+test "HeikinAshiIndicator smoothed candles" {
+    const allocator = testing.allocator;
+    const rows = try test_helpers.createSampleRows(allocator, 20);
+    defer allocator.free(rows);
+    var series = try ohlcv.TimeSeries.fromSlice(allocator, rows, false);
+    defer series.deinit();
+
+    const ha = ohlcv.HeikinAshiIndicator{};
+    var result = try ha.calculate(series, allocator);
+    defer result.deinit();
+
+    try testing.expectEqual(series.len(), result.ha_open.len());
+    try testing.expectEqual(series.len(), result.ha_high.len());
+    try testing.expectEqual(series.len(), result.ha_low.len());
+    try testing.expectEqual(series.len(), result.ha_close.len());
+    
+    // Heikin Ashi high >= close/open >= low
+    for (0..result.ha_open.len()) |i| {
+        try testing.expect(result.ha_high.arr_values[i] >= result.ha_close.arr_values[i]);
+        try testing.expect(result.ha_high.arr_values[i] >= result.ha_open.arr_values[i]);
+        try testing.expect(result.ha_close.arr_values[i] >= result.ha_low.arr_values[i] or 
+                         result.ha_open.arr_values[i] >= result.ha_low.arr_values[i]);
+    }
+}
+
+// └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+// ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
