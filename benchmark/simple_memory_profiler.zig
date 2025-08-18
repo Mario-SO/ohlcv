@@ -37,7 +37,7 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     std.debug.print("╔════════════════════════════════════════════════════════════════╗\n", .{});
-    std.debug.print("║                    OHLCV Memory Profile                       ║\n", .{});
+    std.debug.print("║                    OHLCV Memory Profile                        ║\n", .{});
     std.debug.print("╚════════════════════════════════════════════════════════════════╝\n", .{});
 
     const sizes = [_]usize{ 1000, 10000 };

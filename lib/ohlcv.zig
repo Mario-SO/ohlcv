@@ -24,9 +24,17 @@ pub const TimeSeries = @import("utils/time_series.zig").TimeSeries;
 
 // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 
-// ┌─────────────────────────────────────────── Parser ────────────────────────────────────────────┐
+// ┌──────────────────────────────────────── Memory Utils ─────────────────────────────────────────┐
+
+pub const MemoryPool = @import("utils/memory_pool.zig").MemoryPool;
+pub const IndicatorArena = @import("utils/memory_pool.zig").IndicatorArena;
+
+// └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+// ┌─────────────────────────────────────────────── Parser ────────────────────────────────────────────┐
 
 pub const CsvParser = @import("parser/csv_parser.zig").CsvParser;
+pub const StreamingCsvParser = @import("parser/streaming_csv_parser.zig").StreamingCsvParser;
 pub const ParseError = @import("parser/csv_parser.zig").ParseError;
 
 // └───────────────────────────────────────────────────────────────────────────────────────────────┘

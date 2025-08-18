@@ -30,7 +30,7 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     print("\n╔════════════════════════════════════════════════════════════════╗\n", .{});
-    print("║                     OHLCV Benchmark Results                   ║\n", .{});
+    print("║                     OHLCV Benchmark Results                    ║\n", .{});
     print("╚════════════════════════════════════════════════════════════════╝\n\n", .{});
 
     const sizes = [_]usize{ 1000, 10000 };

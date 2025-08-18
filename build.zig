@@ -91,4 +91,30 @@ pub fn build(b: *std.Build) void {
 
     const profiler_run = b.addRunArtifact(profiler_exe);
     b.step("profile-memory", "Run memory profiling").dependOn(&profiler_run.step);
+
+    // ─── Streaming benchmark ───
+    const streaming_benchmark_exe = b.addExecutable(.{
+        .name = "benchmark-streaming",
+        .root_source_file = b.path("benchmark/streaming_benchmark.zig"),
+        .target = target,
+        .optimize = .ReleaseFast,
+    });
+    streaming_benchmark_exe.root_module.addImport("ohlcv", mod);
+    b.installArtifact(streaming_benchmark_exe);
+
+    const streaming_benchmark_run = b.addRunArtifact(streaming_benchmark_exe);
+    b.step("benchmark-streaming", "Run streaming vs non-streaming benchmark").dependOn(&streaming_benchmark_run.step);
+
+    // ─── Performance benchmark ───
+    const perf_benchmark_exe = b.addExecutable(.{
+        .name = "benchmark-performance",
+        .root_source_file = b.path("benchmark/performance_benchmark.zig"),
+        .target = target,
+        .optimize = .ReleaseFast,
+    });
+    perf_benchmark_exe.root_module.addImport("ohlcv", mod);
+    b.installArtifact(perf_benchmark_exe);
+
+    const perf_benchmark_run = b.addRunArtifact(perf_benchmark_exe);
+    b.step("benchmark-performance", "Run comprehensive performance benchmark").dependOn(&perf_benchmark_run.step);
 }
