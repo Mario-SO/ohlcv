@@ -62,6 +62,37 @@ A modern Zig library for fetching and parsing Open-High-Low-Close-Volume (OHLCV)
 
 ---
 
+## 📦 Using as a Library
+
+### Add to Your Project
+
+```bash
+# Fetch from GitHub
+zig fetch --save https://github.com/Mario-SO/ohlcv/archive/refs/heads/main.tar.gz
+```
+
+### Configure build.zig
+
+```zig
+const ohlcv_dep = b.dependency("ohlcv", .{
+    .target = target,
+    .optimize = optimize,
+});
+exe.root_module.addImport("ohlcv", ohlcv_dep.module("ohlcv"));
+```
+
+### Import and Use
+
+```zig
+const ohlcv = @import("ohlcv");
+
+// Your code here
+var series = try ohlcv.fetchPreset(.btc_usd, allocator);
+defer series.deinit();
+```
+
+See [USAGE.md](USAGE.md) for detailed integration guide.
+
 ## 🚀 Usage Example
 
 ```zig
