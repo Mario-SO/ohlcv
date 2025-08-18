@@ -63,19 +63,26 @@ zig test test/unit/test_time_series.zig -I lib --dep ohlcv -Mohlcv=lib/ohlcv.zig
    - ✅ Data validation
    - ✅ Pre-epoch date handling
    - ✅ Various line endings (CRLF, LF, CR)
+   - ⚡ Fast parser primitives
+   - 🔄 Streaming parser for large files
 
 4. **Indicator Tests** (`test_indicators.zig`)
-   - ✅ **37 Indicators tested** including:
-     - Moving Averages: SMA, EMA, WMA
-     - Momentum: RSI, MACD, Stochastic, Williams %R, ROC, Momentum
-     - Volatility: ATR, Bollinger Bands
-     - Volume: VWAP, OBV, CCI
-     - Channels: Donchian, Aroon
-   - ✅ Multi-line results (MACD, Bollinger Bands, Stochastic)
+   - ✅ **All 37 Indicators fully tested**:
+     - **Trend**: SMA, EMA, WMA, ADX, DMI, Parabolic SAR
+     - **Momentum**: RSI, MACD, Stochastic, Stochastic RSI, Ultimate Oscillator, TRIX, ROC, Momentum, Williams %R
+     - **Volatility**: ATR, Bollinger Bands, Keltner Channels, Donchian Channels, Price Channels
+     - **Volume**: OBV, MFI, CMF, Force Index, Accumulation/Distribution, VWAP, CCI
+     - **Advanced**: Ichimoku Cloud, Heikin Ashi, Pivot Points, Elder Ray, Aroon, Zig Zag
+   - ✅ Multi-line results (MACD, Bollinger Bands, Stochastic, etc.)
    - ✅ Edge cases (period=0, insufficient data)
    - ✅ All gains/losses scenarios
    - ✅ Timestamp alignment
-   - Note: New indicators (ADX, MFI, CMF, etc.) need test coverage
+   - ✅ Comprehensive test coverage for all indicators
+
+5. **Memory Management Tests** 
+   - 🆕 Memory pool allocation/deallocation
+   - 🆕 IndicatorArena batch operations
+   - 🆕 Memory leak detection
 
 ### Integration Tests
 
@@ -83,6 +90,8 @@ zig test test/unit/test_time_series.zig -I lib --dep ohlcv -Mohlcv=lib/ohlcv.zig
    - ✅ Complete data pipeline
    - ✅ Multiple data source comparison
    - ✅ Data integrity preservation
+   - 🆕 Streaming parser integration
+   - 🆕 Memory pool integration
 
 ## Test Helpers
 
@@ -93,11 +102,30 @@ The `test_helpers.zig` module provides utilities:
 - `floatEquals()` - Compare floats with epsilon
 - `rowsToCsv()` - Convert rows to CSV format
 
+## Performance Testing
+
+### Benchmarks Available:
+```bash
+zig build benchmark                # Basic performance test
+zig build benchmark-performance     # Comprehensive indicator benchmarks
+zig build benchmark-streaming       # Streaming vs standard parser comparison
+zig build profile-memory           # Memory usage profiling
+```
+
+### Performance Metrics:
+- Execution time (ms)
+- Operations per second
+- Memory allocations/deallocations
+- Peak memory usage
+- Cache efficiency
+
 ## CI/CD Integration
 
 Tests run automatically on:
 - Every push to `main` or `develop`
 - Every pull request
+- Daily performance regression tests
+- Memory leak detection in debug builds
 - Multiple platforms (Ubuntu, macOS, Windows)
 
 See `.github/workflows/test.yml` for details.

@@ -10,13 +10,25 @@ A modern Zig library for fetching and parsing Open-High-Low-Close-Volume (OHLCV)
 
 - **Preset Datasets**: BTC, S&P 500, ETH, Gold (from GitHub or local)
 
-- **Fast, robust CSV parsing** (handles headers, skips invalid/zero rows)
+- **High-Performance Parsing**: 
+  - Standard CSV parser with robust error handling
+  - **NEW**: Streaming CSV parser for processing large datasets without full memory load
+  - **NEW**: Optimized fast parser with SIMD-aware line counting
+  - Handles headers, skips invalid/zero rows automatically
+
+- **Memory Management**:
+  - **NEW**: Memory pooling system for efficient allocation reuse
+  - **NEW**: IndicatorArena for batch indicator calculations
+  - All allocations are explicit and easy to free
 
 - **Time Series Management**: Efficient slicing, filtering, and operations
 
 - **37 Technical Indicators**: Complete suite including trend (SMA, EMA, ADX), momentum (RSI, MACD, Stochastic), volatility (Bollinger Bands, ATR, Keltner Channels), volume (OBV, MFI, CMF), and advanced systems (Ichimoku Cloud, Heikin Ashi)
 
-- **Memory safe**: all allocations are explicit, easy to free
+- **Performance Testing**:
+  - **NEW**: Comprehensive performance benchmarks
+  - **NEW**: Streaming vs non-streaming comparison tools
+  - Memory profiling capabilities
 
 - **Extensible**: add new data sources, indicators, or parsers easily
 
@@ -33,6 +45,19 @@ A modern Zig library for fetching and parsing Open-High-Low-Close-Volume (OHLCV)
    zig build run
    ```
    The demo fetches S&P 500 data and prints a sample of parsed rows.
+
+3. **Run tests:**
+   ```sh
+   zig build test
+   ```
+
+4. **Run benchmarks:**
+   ```sh
+   zig build benchmark              # Basic benchmark
+   zig build benchmark-performance   # Comprehensive performance tests
+   zig build benchmark-streaming     # Compare streaming vs non-streaming
+   zig build profile-memory         # Memory usage profiler
+   ```
 
 
 ---
@@ -71,6 +96,44 @@ pub fn main() !void {
         std.debug.print("TS: {d}, SMA: {d:.2}\n", .{result.arr_timestamps[i], result.arr_values[i]});
     }
 }
+```
+
+### Streaming Large Datasets
+
+```zig
+const std = @import("std");
+const ohlcv = @import("lib/ohlcv.zig");
+
+pub fn processLargeDataset(allocator: std.mem.Allocator) !void {
+    // Use streaming parser for large files
+    var parser = ohlcv.StreamingCsvParser.init(allocator);
+    defer parser.deinit();
+    
+    // Process data in chunks without loading entire file
+    const file = try std.fs.cwd().openFile("huge_dataset.csv", .{});
+    defer file.close();
+    
+    while (try parser.parseChunk(file.reader())) |chunk| {
+        defer chunk.deinit();
+        // Process each chunk independently
+        for (chunk.rows) |row| {
+            // Your processing logic here
+        }
+    }
+}
+```
+
+### Memory Pool Usage
+
+```zig
+// Use memory pool for efficient indicator calculations
+var pool = try ohlcv.MemoryPool.init(allocator, 1024 * 1024); // 1MB pool
+defer pool.deinit();
+
+var arena = ohlcv.IndicatorArena.init(&pool);
+// All allocations within arena are automatically managed
+const result = try sma.calculateWithArena(series, &arena);
+// No need to manually free result - arena handles it
 ```
 
 ---
@@ -113,13 +176,20 @@ pub fn main() !void {
 
 ### Key Components
 
-- Data Sources: `DataSource`, `HttpDataSource`, `FileDataSource`, `MemoryDataSource`
+- **Data Sources**: `DataSource`, `HttpDataSource`, `FileDataSource`, `MemoryDataSource`
 
-- Parser: `CsvParser`
+- **Parsers**: 
+  - `CsvParser` - Standard CSV parser with robust error handling
+  - `StreamingCsvParser` - Process large files in chunks
+  - Fast parser primitives for optimized parsing
+
+- **Memory Management**:
+  - `MemoryPool` - Reusable memory allocation pool
+  - `IndicatorArena` - Arena allocator for batch calculations
 
 - **37 Indicators**: Including trend analysis (SMA, EMA, WMA, ADX, DMI, Parabolic SAR), momentum oscillators (RSI, MACD, Stochastic, Stochastic RSI, Ultimate Oscillator, TRIX), volatility bands (Bollinger Bands, Keltner Channels, Donchian Channels, Price Channels), volume analysis (OBV, MFI, CMF, Force Index, A/D Line), and advanced systems (Ichimoku Cloud, Heikin Ashi, Pivot Points, Elder Ray, Aroon, Zig Zag)
 
-- Convenience: `fetchPreset(source: PresetSource, allocator) !TimeSeries`
+- **Convenience**: `fetchPreset(source: PresetSource, allocator) !TimeSeries`
 
 For detailed usage, see [ARCHITECTURE.md](ARCHITECTURE.md)
 
@@ -136,8 +206,15 @@ For detailed usage, see [ARCHITECTURE.md](ARCHITECTURE.md)
 ```
 ohlcv/
   - ARCHITECTURE.md
+  - CLAUDE.md              # Claude Code guidance
+  - PROFILING.md           # Performance profiling guide
   - build.zig
   - build.zig.zon
+  - benchmark/
+    - performance_benchmark.zig
+    - simple_benchmark.zig
+    - simple_memory_profiler.zig
+    - streaming_benchmark.zig
   - data/
     - btc.csv
     - eth.csv
@@ -158,7 +235,12 @@ ohlcv/
     - ohlcv.zig
     - parser/
       - csv_parser.zig
-    - time_series.zig
+      - fast_parser.zig         # Optimized parsing primitives
+      - streaming_csv_parser.zig # Chunked processing
+    - utils/
+      - date.zig
+      - memory_pool.zig         # Memory pooling system
+      - time_series.zig
     - types/
       - ohlc_bar.zig
       - ohlcv_row.zig

@@ -66,18 +66,6 @@ pub fn build(b: *std.Build) void {
     const benchmark_run = b.addRunArtifact(benchmark_exe);
     b.step("benchmark", "Run performance benchmarks").dependOn(&benchmark_run.step);
 
-    // ─── Advanced benchmark ───
-    const adv_benchmark_exe = b.addExecutable(.{
-        .name = "benchmark-advanced",
-        .root_source_file = b.path("benchmark/benchmark_indicators.zig"),
-        .target = target,
-        .optimize = .ReleaseFast,
-    });
-    adv_benchmark_exe.root_module.addImport("ohlcv", mod);
-    b.installArtifact(adv_benchmark_exe);
-
-    const adv_benchmark_run = b.addRunArtifact(adv_benchmark_exe);
-    b.step("benchmark-advanced", "Run advanced performance benchmarks").dependOn(&adv_benchmark_run.step);
 
     // ─── Memory profiler ───
     const profiler_exe = b.addExecutable(.{

@@ -20,8 +20,9 @@ zig build run
 zig build test
 
 # Run benchmarks
-zig build benchmark
-zig build benchmark-advanced
+zig build benchmark                # Basic benchmark
+zig build benchmark-performance     # Comprehensive performance tests
+zig build benchmark-streaming       # Streaming vs non-streaming comparison
 
 # Run memory profiler
 zig build profile-memory
@@ -46,6 +47,8 @@ The library is exposed through `lib/ohlcv.zig` which re-exports all public APIs.
 
 2. **Parsing** (`lib/parser/`)
    - `CsvParser` handles CSV parsing with robust error handling
+   - `StreamingCsvParser` processes large files in chunks without full memory load
+   - `fast_parser.zig` provides optimized parsing primitives with SIMD-aware line counting
    - Skips invalid rows, headers, pre-1970 dates, and zero values
    - Supports multiple line endings (CRLF, LF, CR)
 
@@ -54,7 +57,13 @@ The library is exposed through `lib/ohlcv.zig` which re-exports all public APIs.
    - Provides slicing, filtering, sorting, and transformation operations
    - Memory-safe with explicit allocation/deallocation
 
-4. **Technical Indicators** (`lib/indicators/`)
+4. **Memory Management** (`lib/utils/`)
+   - `MemoryPool` provides reusable memory allocation pools
+   - `IndicatorArena` offers arena allocation for batch calculations
+   - Reduces allocation overhead in hot paths
+   - Improves cache locality for performance-critical operations
+
+5. **Technical Indicators** (`lib/indicators/`)
    - **37 indicators** including trend, momentum, volatility, volume, and advanced systems
    - Each indicator implements a `calculate()` method returning `IndicatorResult`
    - Results can have multiple lines (e.g., MACD has signal and histogram)
@@ -74,7 +83,9 @@ All allocations are explicit using Zig's allocator pattern:
 
 ### Data Flow
 ```
-DataSource -> fetch() -> raw bytes -> CsvParser -> OhlcvRow[] -> TimeSeries -> Indicators -> IndicatorResult
+DataSource -> fetch() -> raw bytes -> CsvParser/StreamingCsvParser -> OhlcvRow[] -> TimeSeries -> Indicators -> IndicatorResult
+                                              |
+                                              └─> MemoryPool/IndicatorArena (optional optimization)
 ```
 
 ### Preset Data Sources
@@ -125,7 +136,12 @@ These can be fetched either from GitHub or local CSV files in the `data/` direct
 3. **Performance Considerations**
    - Use `.ReleaseFast` optimization for benchmarks
    - Library supports both module import and static linking
-   - Benchmarking tools available for performance testing
+   - Comprehensive benchmarking suite:
+     - `benchmark-performance` for detailed performance metrics
+     - `benchmark-streaming` for comparing parsing strategies
+     - `profile-memory` for memory usage analysis
+   - Memory pooling reduces allocation overhead
+   - Fast parser uses optimized primitives for line counting
 
 ## GitHub Workflows
 

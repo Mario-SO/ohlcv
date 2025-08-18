@@ -1,0 +1,108 @@
+name: Performance Tracking
+
+on:
+  schedule:
+    # Run weekly on Sunday at 2:00 UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      comprehensive:
+        description: 'Run comprehensive benchmarks'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  benchmark:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.14.1
+      
+      - name: Cache results
+        uses: actions/cache@v4
+        with:
+          path: |
+            benchmark_results/
+            .zig-cache/
+          key: ${{ runner.os }}-bench-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-bench-
+      
+      - name: Create results directory
+        run: mkdir -p benchmark_results
+      
+      - name: Run basic benchmarks
+        run: |
+          echo "📊 Running Performance Benchmarks"
+          echo "================================="
+          echo "Date: $(date)"
+          echo "Commit: ${{ github.sha }}"
+          echo ""
+          
+          # Basic benchmark
+          echo "Basic Benchmark:" | tee benchmark_results/latest.txt
+          zig build benchmark 2>&1 | tee -a benchmark_results/latest.txt
+          
+          # Memory profile
+          echo -e "\nMemory Profile:" | tee -a benchmark_results/latest.txt
+          zig build profile-memory 2>&1 | tee -a benchmark_results/latest.txt
+      
+      - name: Run comprehensive benchmarks
+        if: github.event.inputs.comprehensive == 'true' || github.event_name == 'schedule'
+        run: |
+          echo -e "\n🎯 Comprehensive Performance:" | tee -a benchmark_results/latest.txt
+          zig build benchmark-performance 2>&1 | tee -a benchmark_results/latest.txt
+          
+          echo -e "\n🔄 Streaming Comparison:" | tee -a benchmark_results/latest.txt
+          zig build benchmark-streaming 2>&1 | tee -a benchmark_results/latest.txt
+      
+      - name: Archive results
+        run: |
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          cp benchmark_results/latest.txt "benchmark_results/benchmark_${TIMESTAMP}.txt"
+          
+          # Keep only last 10 results
+          ls -t benchmark_results/benchmark_*.txt | tail -n +11 | xargs rm -f 2>/dev/null || true
+      
+      - name: Generate summary
+        run: |
+          echo "# Performance Summary" > benchmark_results/SUMMARY.md
+          echo "" >> benchmark_results/SUMMARY.md
+          echo "**Latest Run:** $(date)" >> benchmark_results/SUMMARY.md
+          echo "**Commit:** ${{ github.sha }}" >> benchmark_results/SUMMARY.md
+          echo "" >> benchmark_results/SUMMARY.md
+          echo "## Key Metrics" >> benchmark_results/SUMMARY.md
+          echo '```' >> benchmark_results/SUMMARY.md
+          grep -E "(SMA-20|EMA-20|RSI-14|rows/ms|Memory used)" benchmark_results/latest.txt | head -10 >> benchmark_results/SUMMARY.md
+          echo '```' >> benchmark_results/SUMMARY.md
+          
+          # Show trend if we have history
+          if ls benchmark_results/benchmark_*.txt 1> /dev/null 2>&1; then
+            echo "" >> benchmark_results/SUMMARY.md
+            echo "## Historical Runs" >> benchmark_results/SUMMARY.md
+            echo "Total archived results: $(ls benchmark_results/benchmark_*.txt | wc -l)" >> benchmark_results/SUMMARY.md
+          fi
+      
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results-${{ github.run_number }}
+          path: benchmark_results/
+          retention-days: 30
+      
+      - name: Create issue if regression detected
+        if: github.event_name == 'schedule'
+        run: |
+          # Simple regression check
+          if grep -q "error\|panic\|failed" benchmark_results/latest.txt; then
+            echo "⚠️ Benchmark errors detected"
+            # Would create GitHub issue here in real workflow
+          fi

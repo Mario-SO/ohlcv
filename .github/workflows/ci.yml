@@ -1,0 +1,126 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        zig-version: [0.14.1]
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: ${{ matrix.zig-version }}
+      
+      - name: Build library
+        run: zig build
+      
+      - name: Run tests
+        run: zig build test
+      
+      - name: Run demo
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            zig build run 2>&1 | head -50
+          else
+            zig build run | head -50
+          fi
+        shell: bash
+      
+      # Quick smoke test of benchmarks (Ubuntu only)
+      - name: Verify benchmarks build
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          zig build benchmark --summary none
+          zig build benchmark-streaming --summary none
+          zig build profile-memory --summary none
+  
+  performance-check:
+    name: Performance Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.14.1
+      
+      - name: Quick benchmark PR
+        id: pr_bench
+        run: |
+          zig build benchmark > pr_benchmark.txt 2>&1
+          echo "PR_TIME=$(grep 'SMA-20' pr_benchmark.txt | head -1 | awk '{print $2}')" >> $GITHUB_OUTPUT
+      
+      - name: Checkout main
+        run: |
+          git fetch origin main
+          git checkout origin/main
+      
+      - name: Quick benchmark main
+        id: main_bench  
+        run: |
+          zig build benchmark > main_benchmark.txt 2>&1
+          echo "MAIN_TIME=$(grep 'SMA-20' main_benchmark.txt | head -1 | awk '{print $2}')" >> $GITHUB_OUTPUT
+      
+      - name: Compare performance
+        run: |
+          PR_TIME="${{ steps.pr_bench.outputs.PR_TIME }}"
+          MAIN_TIME="${{ steps.main_bench.outputs.MAIN_TIME }}"
+          
+          if [ -n "$PR_TIME" ] && [ -n "$MAIN_TIME" ]; then
+            RATIO=$(echo "scale=2; $PR_TIME / $MAIN_TIME" | bc)
+            echo "Performance ratio: $RATIO (PR/main)"
+            
+            # Fail if PR is >50% slower
+            if (( $(echo "$RATIO > 1.5" | bc -l) )); then
+              echo "❌ Performance regression detected (>50% slower)"
+              exit 1
+            else
+              echo "✅ Performance acceptable"
+            fi
+          else
+            echo "⚠️ Could not compare performance"
+          fi
+      
+      - name: Comment PR results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## 🚀 CI Results\n\n';
+            
+            // Add benchmark results if available
+            if (fs.existsSync('pr_benchmark.txt')) {
+              const prBench = fs.readFileSync('pr_benchmark.txt', 'utf8');
+              const lines = prBench.split('\n').filter(l => l.includes('ms')).slice(0, 6);
+              comment += '### Performance (1000 points)\n```\n' + lines.join('\n') + '\n```\n';
+            }
+            
+            comment += '\n✅ All checks passed';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

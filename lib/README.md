@@ -1,14 +1,17 @@
-# OHLCV Library Architecture v2.0
+# OHLCV Library Architecture v3.0
 
 ## Overview
 
-The OHLCV library has been refactored for better performance, cleaner API, and improved extensibility. Key improvements include:
+The OHLCV library has been enhanced with high-performance parsing and memory management capabilities. Key improvements include:
 
 - **Decoupled data sources** - Easy to add custom data providers
 - **Efficient time series container** - Zero-copy operations where possible
-- **Clean indicator framework** - Consistent API across all indicators
+- **Clean indicator framework** - Consistent API across all 37 indicators
 - **Hungarian notation** - Clear type information in variable names
 - **Performance optimizations** - Pre-allocation, SIMD-ready structures
+- **Streaming parser** - Process large datasets without full memory load
+- **Memory pooling** - Efficient allocation reuse for hot paths
+- **Fast parsing primitives** - Optimized line counting and parsing
 
 ## Naming Conventions
 
@@ -53,7 +56,26 @@ MemoryDataSource - Use in-memory data
 // ╚══════════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-### 3. Time Series Container
+### 3. Parsers
+
+```zig
+// ╔══════════════════════════════════════ Parsers ══════════════════════════════════════╗
+CsvParser           - Standard CSV parser with robust error handling
+StreamingCsvParser  - Process large files in chunks
+fast_parser         - Optimized parsing primitives (internal)
+// ╚═════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+### 4. Memory Management
+
+```zig
+// ╔══════════════════════════════════════ Memory ══════════════════════════════════════╗
+MemoryPool      - Reusable memory allocation pool
+IndicatorArena  - Arena allocator for batch calculations
+// ╚═════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+### 5. Time Series Container
 
 ```zig
 // ╔══════════════════════════════════════ Time Series ══════════════════════════════════════╗
@@ -65,7 +87,7 @@ TimeSeries - Efficient container with:
 // ╚═════════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-### 4. Indicators (37 Total)
+### 6. Indicators (37 Total)
 
 ```zig
 // ╔══════════════════════════════════════ Indicators ══════════════════════════════════════╗
@@ -151,6 +173,42 @@ var series = try parser.parse(data);
 defer series.deinit();
 ```
 
+### Streaming Large Files
+
+```zig
+// Process huge CSV files without loading into memory
+var parser = ohlcv.StreamingCsvParser.init(allocator);
+defer parser.deinit();
+
+const file = try std.fs.cwd().openFile("huge_dataset.csv", .{});
+defer file.close();
+
+while (try parser.parseChunk(file.reader())) |chunk| {
+    defer chunk.deinit();
+    // Process each chunk
+    for (chunk.rows) |row| {
+        // Your logic here
+    }
+}
+```
+
+### Memory Pool for Performance
+
+```zig
+// Create a memory pool for efficient allocations
+var pool = try ohlcv.MemoryPool.init(allocator, 1024 * 1024); // 1MB
+defer pool.deinit();
+
+// Use arena for batch calculations
+var arena = ohlcv.IndicatorArena.init(&pool);
+
+// Calculate multiple indicators without individual allocations
+const sma_result = try sma.calculateWithArena(series, &arena);
+const ema_result = try ema.calculateWithArena(series, &arena);
+const rsi_result = try rsi.calculateWithArena(series, &arena);
+// All results automatically freed when arena is reset or destroyed
+```
+
 ### Advanced Operations
 
 ```zig
@@ -185,6 +243,10 @@ inline for (indicators) |indicator| {
 2. **Zero-copy slicing** - Time series slices don't copy data when possible
 3. **Efficient algorithms** - Rolling calculations for indicators
 4. **SIMD-ready** - Data structures aligned for future SIMD optimizations
+5. **Streaming parser** - Process gigabyte-sized files with minimal memory
+6. **Memory pooling** - Reduce allocation overhead in hot paths
+7. **Fast parsing** - Optimized line counting and parsing primitives
+8. **Benchmarking** - Comprehensive performance testing suite available
 
 ## Extending the Library
 
@@ -241,12 +303,12 @@ pub const ApiDataSource = struct {
 // ╚════════════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-## Migration from v1
+## Migration from v2
 
-- `Row` → `OhlcvRow` (legacy alias available)
-- `Bar` → `OhlcBar` (legacy alias available)
-- `fetch()` → `fetchPreset()` or custom DataSource
-- `indicators.calculateSMAForRange()` → Create TimeSeries, filter, then calculate
-- Direct indicator structs instead of nested namespace
+- Direct use of `OhlcvRow` and `OhlcBar` types
+- `fetchPreset()` for preset data sources
+- Streaming parser for large datasets
+- Memory pooling for performance optimization
+- All 37 indicators fully implemented
 
-The new architecture provides more flexibility while maintaining ease of use for common operations.
+The architecture provides maximum flexibility and performance for financial data processing.

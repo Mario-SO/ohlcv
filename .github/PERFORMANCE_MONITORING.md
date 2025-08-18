@@ -1,212 +1,196 @@
-# GitHub Actions Performance Monitoring
+# Performance Monitoring Guide
 
-This repository includes automated performance monitoring through GitHub Actions to catch performance regressions early and track performance trends over time.
+Last Updated: 2025-08-18
 
-## 🚀 Available Workflows
+## 🎯 Simplified Performance Monitoring
 
-### 1. Performance Benchmarks (`performance.yml`)
+This repository uses a streamlined approach to performance monitoring with just 2 workflows that handle performance tracking.
 
-**Triggers:**
-- Push to `main` or `develop` branches
-- Pull requests to `main`  
-- Daily at 2:00 UTC (scheduled)
-- Manual dispatch
+## 📊 Performance Workflows
 
-**What it does:**
-- Runs comprehensive performance benchmarks
-- Executes memory profiling
-- Compares with previous runs when available
-- Uploads detailed profiling data as artifacts
-- Comments on PRs with performance results
-- Checks for performance regressions (fails if >50% slower)
+### 1. **CI Workflow** (`ci.yml`)
+**When it runs**: Every push and PR
+**Performance features**:
+- ✅ Quick benchmark on PRs
+- ✅ Compares PR vs main branch
+- ✅ Fails if >50% performance regression
+- ✅ Auto-comments results on PRs
+- **Runtime**: ~2-3 minutes
 
-### 2. PR Performance Check (`performance-pr.yml`)
+### 2. **Performance Tracking** (`performance-tracking.yml`)
+**When it runs**: Weekly (Sunday 2 AM UTC) or manual
+**Performance features**:
+- 📊 Full benchmark suite (all indicators)
+- 📈 Historical tracking (keeps last 10 results)
+- 💾 Comprehensive performance analysis
+- 🔄 Streaming vs standard parser comparison
+- **Runtime**: ~5 minutes
 
-**Triggers:**
-- Pull requests to `main` (opened, synchronized, reopened)
+## 📈 What Gets Monitored
 
-**What it does:**
-- Benchmarks both PR branch and main branch
-- Generates detailed performance comparison table
-- Posts comparison as PR comment (updates existing comment)
-- Fails CI if significant performance regression detected (>20% slower)
-- Uses Python script for accurate delta calculations
-
-### 3. Performance Monitoring (`performance-monitoring.yml`)
-
-**Triggers:**
-- Daily at 3:00 UTC (scheduled)
-- Manual dispatch with configurable history period
-
-**What it does:**
-- Collects historical performance data
-- Generates trend analysis with charts
-- Tracks performance over time (up to 60 days)
-- Creates GitHub issues for significant performance degradation
-- Maintains performance history artifacts
-
-## 📊 What Gets Monitored
-
-### Performance Metrics
-- **SMA-20**: Simple Moving Average (20 period)
-- **EMA-20**: Exponential Moving Average (20 period)  
-- **RSI-14**: Relative Strength Index (14 period)
-- **Bollinger-20**: Bollinger Bands (20 period)
+### Core Indicators (Quick Check - Every PR)
+- **SMA-20**: Simple Moving Average
+- **EMA-20**: Exponential Moving Average  
+- **RSI-14**: Relative Strength Index
+- **Bollinger-20**: Bollinger Bands
 - **MACD**: Moving Average Convergence Divergence
-- **ATR-14**: Average True Range (14 period)
+- **ATR-14**: Average True Range
 
-### Test Data Sizes
-- **1,000 data points**: Small dataset performance
-- **10,000 data points**: Medium dataset performance
+### Full Suite (Weekly + Manual)
+All 37 indicators including:
+- **Trend**: ADX, DMI, Parabolic SAR, etc.
+- **Momentum**: Stochastic, Williams %R, TRIX, etc.
+- **Volatility**: Keltner Channels, Donchian Channels, etc.
+- **Volume**: OBV, MFI, CMF, Force Index, etc.
+- **Advanced**: Ichimoku Cloud, Pivot Points, etc.
 
-### Memory Metrics
-- Memory usage per operation
-- Memory leaks detection
-- Peak memory consumption
-- Memory efficiency trends
+### Dataset Sizes Tested
+- 1,000 rows (small)
+- 10,000 rows (medium)
+- 50,000 rows (large)
 
-## 📈 Performance Reports
+## 🚀 Performance Standards
 
-### PR Comments
-Every PR gets an automatic performance comparison comment showing:
+### PR Performance Check
+Every PR automatically gets checked:
+```
+Performance ratio: 1.2 (PR/main)
+✅ Performance acceptable (<1.5x slower)
+```
 
+**Thresholds**:
+- ✅ **Pass**: <50% slower than main
+- ❌ **Fail**: >50% slower than main
+
+### Weekly Performance Tracking
+Comprehensive analysis includes:
+- Parser throughput (rows/ms)
+- Memory usage patterns
+- Indicator calculation times
+- Streaming vs standard comparison
+
+## 📋 PR Comment Example
+
+Every PR receives an automatic comment:
 ```markdown
-# 📊 Performance Benchmark Results
+## 🚀 CI Results
 
-## Benchmark Results
-📊 Dataset: 1000 data points
-SMA-20:           0.004 ms
-EMA-20:           0.006 ms
-RSI-14:           0.007 ms
-...
-
-## Performance Comparison
-| Indicator | Main (ms) | PR (ms) | Delta | Change | Status |
-|-----------|-----------|---------|-------|--------|--------|
-| SMA-20    |     0.004 |   0.005 | +0.001 |  +25.0% | ⚠️ SLOWER |
-| EMA-20    |     0.006 |   0.006 |  0.000 |   0.0% | ✅ OK |
-...
+### Performance (1000 points)
+```
+SMA-20:       0.004 ms
+EMA-20:       0.005 ms
+RSI-14:       0.006 ms
+Bollinger-20: 0.012 ms
+MACD:         0.024 ms
+ATR-14:       0.010 ms
 ```
 
-### Trend Analysis
-Daily monitoring generates trend reports with:
-- Performance changes over time
-- Visual charts showing trends
-- Alerts for significant degradations
-- Historical data preservation
-
-## ⚡ Performance Thresholds
-
-### CI/CD Failure Thresholds
-- **Major regression**: >50% performance loss (fails CI)
-- **Significant regression**: >20% performance loss (fails PR check)
-- **Minor regression**: 5-20% performance loss (warning)
-- **Acceptable variance**: <5% change (passes)
-
-### Trend Monitoring Thresholds
-- **Stable**: <2% change over time
-- **Degradation alert**: >25% degradation creates GitHub issue
-- **Improvement tracking**: >10% improvement noted in reports
-
-## 🔧 Configuration
-
-### Manual Workflow Dispatch
-You can manually trigger performance monitoring:
-
-1. Go to **Actions** tab in GitHub
-2. Select **Performance Monitoring** workflow  
-3. Click **Run workflow**
-4. Optional: Set number of days for history analysis
-
-### Customizing Thresholds
-Edit the workflow files to adjust performance thresholds:
-
-```yaml
-# In performance-pr.yml
-if change_pct > 20:  # Adjust regression threshold
-    status = "❌ SLOWER"
+✅ All checks passed
 ```
 
-### Adding New Indicators
-To monitor additional indicators:
+## 🛠️ Running Benchmarks Locally
 
-1. Add the indicator to benchmark suite
-2. Update the regex patterns in workflows:
-   ```python
-   pattern = r'(SMA-\d+|EMA-\d+|RSI-\d+|NEW_INDICATOR):\s+([0-9.]+)\s+ms'
-   ```
-
-## 📁 Artifacts and Data
-
-### Artifact Retention
-- **Benchmark results**: 30 days
-- **Detailed profiling**: 7 days  
-- **Performance trends**: 90 days
-- **Performance history**: 90 days (rolling 60-day dataset)
-
-### Artifact Contents
-- `benchmark_latest.txt`: Latest benchmark results
-- `memory_profile_latest.txt`: Latest memory profile
-- `PERFORMANCE_SUMMARY.md`: Formatted summary report
-- `performance_trends.png`: Visual trend charts
-- `performance_history.json`: Historical data for analysis
-
-## 🛠️ Local Development
-
-### Running Benchmarks Locally
 ```bash
-# Quick benchmarks
+# Quick benchmark (mimics CI)
 zig build benchmark
 
-# Memory profiling  
+# Full performance suite
+zig build benchmark-performance
+
+# Streaming comparison
+zig build benchmark-streaming
+
+# Memory profiling
 zig build profile-memory
-
-# Full profiling suite
-./scripts/profile.sh all
-
-# Compare with previous run
-./scripts/profile.sh compare
 ```
 
-### Testing Workflow Changes
-1. Make changes to workflow files
-2. Push to a feature branch
-3. Create PR to see performance comparison in action
-4. Monitor GitHub Actions for successful execution
+## 📁 Performance Artifacts
+
+### What's Stored
+- **CI Results**: Not stored (shown in PR comments only)
+- **Weekly Results**: Last 10 benchmark runs
+- **Retention**: 30 days for artifacts
+
+### Artifact Contents
+- `latest.txt`: Most recent benchmark results
+- `benchmark_YYYYMMDD_HHMMSS.txt`: Timestamped results
+- `SUMMARY.md`: Formatted performance summary
+
+## 🔧 Manual Performance Testing
+
+### Trigger Comprehensive Benchmark
+1. Go to **Actions** tab
+2. Select **Performance Tracking**
+3. Click **Run workflow**
+4. Check "Run comprehensive benchmarks" for full suite
+
+### View Historical Results
+1. Go to **Actions** tab
+2. Select a previous **Performance Tracking** run
+3. Download artifacts from bottom of page
+
+## ⚡ Performance Tips
+
+### For Contributors
+1. **Before submitting PR**: Run `zig build benchmark` locally
+2. **Check PR comment**: Review automated performance results
+3. **If regression detected**: Optimize before merge
+
+### For Maintainers
+1. **Weekly reports**: Check Sunday performance runs
+2. **Manual triggers**: Run comprehensive tests before releases
+3. **Historical data**: Download artifacts for trend analysis
 
 ## 🚨 Troubleshooting
 
-### Common Issues
+### "Performance regression detected"
+- PR is >50% slower than main
+- Run locally to verify: `zig build benchmark`
+- Profile specific indicators if needed
 
-**Workflow fails with "No benchmark results"**
-- Check that `zig build benchmark` succeeds locally
-- Verify benchmark executables are building correctly
-- Check for missing dependencies in CI environment
+### "Could not compare performance"
+- Benchmark may have failed to run
+- Check that tests pass: `zig build test`
+- Verify benchmarks build: `zig build benchmark`
 
-**Performance comparison shows "No previous data"**
-- This is normal for the first run after setup
-- Subsequent runs will have comparison data
-- Historical data builds up over time
+### Missing historical data
+- First runs won't have comparison data
+- Weekly runs build up history over time
+- Manual runs can fill gaps
 
-**False positive performance regressions**
-- CI environments can have variable performance
-- Consider adjusting thresholds if too sensitive
-- Look for consistent trends rather than single-run spikes
+## 📊 Interpreting Results
 
-### Debug Information
-Each workflow provides detailed logs including:
-- Build output and errors
-- Benchmark execution results  
-- File parsing and comparison details
-- Artifact upload/download status
+### Parser Performance
+```
+Standard Parser:
+  Throughput: 16,129 rows/ms  ← Good (>15,000)
+  
+Streaming Parser:
+  Throughput: 347 rows/ms     ← Expected (trades speed for memory)
+```
 
-## 📚 Best Practices
+### Memory Usage
+```
+Single indicators: ~16 KB per 1K rows
+Multi-line indicators: ~47 KB per 1K rows
+Streaming: 4 KB constant (regardless of size)
+```
 
-1. **Review performance comments** on every PR
-2. **Investigate significant regressions** before merging
-3. **Monitor trend reports** for gradual degradation
-4. **Update benchmarks** when adding new features
-5. **Keep thresholds realistic** based on your performance requirements
-6. **Archive important results** before major refactoring
+## 🎯 Performance Goals
 
-This automated performance monitoring helps maintain the high performance standards of the OHLCV library while providing visibility into performance impacts of code changes.
+- **Parser**: >15,000 rows/ms throughput
+- **SMA-20**: <0.03 ms for 1K rows
+- **Memory**: No leaks detected
+- **Regression**: <5% variance acceptable
+
+## 📈 Continuous Improvement
+
+The simplified monitoring system:
+1. **Catches regressions** immediately on PRs
+2. **Tracks trends** with weekly snapshots
+3. **Enables investigation** with comprehensive benchmarks
+4. **Maintains standards** with automated checks
+
+---
+
+*For workflow implementation details, see `.github/workflows/`*

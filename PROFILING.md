@@ -24,22 +24,36 @@ zig build profile-memory
 
 ### Available Commands
 - `zig build benchmark` - Simple, fast performance benchmarks
-- `zig build benchmark-advanced` - Detailed benchmarking (if working)
+- `zig build benchmark-performance` - Comprehensive performance tests with all indicators
+- `zig build benchmark-streaming` - Compare streaming vs non-streaming parsers
 - `zig build profile-memory` - Memory usage analysis
 - `./scripts/profile.sh` - Automated profiling with result archiving
 
 ## 📊 Benchmark Suite
 
 ### Performance Benchmarks
-The benchmark suite tests all indicators across different dataset sizes (100, 1K, 10K, 50K data points):
+The comprehensive benchmark suite tests all 37 indicators across different dataset sizes (100, 1K, 10K, 50K data points):
 
-- **SMA** (Simple Moving Average)
-- **EMA** (Exponential Moving Average) 
-- **RSI** (Relative Strength Index)
-- **Bollinger Bands**
-- **MACD** (Moving Average Convergence Divergence)
-- **ATR** (Average True Range)
-- **Stochastic Oscillator**
+**Trend Indicators:**
+- SMA, EMA, WMA, ADX, DMI, Parabolic SAR
+
+**Momentum Indicators:**
+- RSI, MACD, Stochastic, Stochastic RSI, Ultimate Oscillator, TRIX, ROC, Momentum, Williams %R
+
+**Volatility Indicators:**
+- Bollinger Bands, ATR, Keltner Channels, Donchian Channels, Price Channels
+
+**Volume Indicators:**
+- OBV, MFI, CMF, Force Index, Accumulation/Distribution
+
+**Advanced Systems:**
+- Ichimoku Cloud, Heikin Ashi, Pivot Points, Elder Ray, Aroon, Zig Zag, CCI, VWAP
+
+### Parser Benchmarks
+The streaming benchmark compares:
+- **Standard CsvParser** - Loads entire dataset into memory
+- **StreamingCsvParser** - Processes data in chunks
+- **Fast Parser Primitives** - Optimized line counting and parsing
 
 **Output includes:**
 - Duration in milliseconds
@@ -144,8 +158,10 @@ This shows linear scaling: 10x data = ~10x time, which is optimal.
 
 ### 2. Memory Optimization
 - Pre-allocate arrays when size is known
-- Use memory pools for frequent allocations
+- Use memory pools for frequent allocations (now available via `MemoryPool`)
+- Use arena allocators for batch operations (`IndicatorArena`)
 - Implement zero-copy operations where possible
+- Leverage streaming parser for large datasets to reduce memory footprint
 
 ### 3. Compilation Optimization
 ```bash
