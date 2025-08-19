@@ -213,12 +213,6 @@ pub fn main() !void {
 
     print("\n" ++ "═" ** 65 ++ "\n", .{});
     print("✅ Performance benchmark completed!\n\n", .{});
-
-    print("📈 Key Features:\n", .{});
-    print("  • Fast CSV parser with optimized float/date parsing\n", .{});
-    print("  • Memory pools for reduced allocation overhead\n", .{});
-    print("  • Arena allocator for batch memory cleanup\n", .{});
-    print("  • Streaming parser available for O(1) memory usage\n", .{});
 }
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
