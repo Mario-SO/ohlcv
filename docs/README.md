@@ -7,6 +7,8 @@ This folder contains the extended documentation for the OHLCV library.
 - **[USAGE.md](USAGE.md)** - Complete usage guide and integration examples
 - **[PROFILING.md](PROFILING.md)** - Performance profiling and benchmarking guide  
 - **[CHANGELOG.md](CHANGELOG.md)** - Project changelog and release history
+- **[WORKFLOW_STATUS](WORKFLOW_STATUS.md)** - Github workflows info
+- **[PERFORMANCE_MONITORING](PERFORMANCE_MONITORING.md)** - Performance monitoring info
 
 ## 🔗 Quick Links
 
