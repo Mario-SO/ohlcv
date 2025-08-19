@@ -153,10 +153,6 @@ pub fn main() !void {
     }
 
     print("✅ Streaming benchmark completed!\n", .{});
-    print("💡 Key insights:\n", .{});
-    print("   • Streaming reduces memory usage for row-by-row processing\n", .{});
-    print("   • Standard parser is optimized for speed with full dataset loading\n", .{});
-    print("   • Streaming shines with large datasets and limited memory\n", .{});
 }
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
