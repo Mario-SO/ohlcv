@@ -121,11 +121,6 @@ pub fn main() !void {
     std.debug.print("• Single indicators (SMA, EMA, RSI): ~{d:.1} KB per 1K points\n", .{@as(f64, @floatFromInt(1000 * @sizeOf(f64) * 2)) / 1024.0});
     std.debug.print("• Multi-result indicators (BB, MACD): ~{d:.1} KB per 1K points\n", .{@as(f64, @floatFromInt(1000 * @sizeOf(f64) * 6)) / 1024.0});
     std.debug.print("• Raw OHLCV data: ~{d:.1} KB per 1K points\n", .{@as(f64, @floatFromInt(1000 * @sizeOf(ohlcv.OhlcvRow))) / 1024.0});
-
-    std.debug.print("\n💡 Tips for optimization:\n", .{});
-    std.debug.print("• Use streaming calculations for large datasets\n", .{});
-    std.debug.print("• Pre-allocate result arrays when size is known\n", .{});
-    std.debug.print("• Consider using memory pools for frequent calculations\n", .{});
 }
 
 // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
