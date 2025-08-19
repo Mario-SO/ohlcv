@@ -32,7 +32,7 @@ zig build profile-memory
 ## 📊 Benchmark Suite
 
 ### Performance Benchmarks
-The comprehensive benchmark suite tests all 37 indicators across different dataset sizes (100, 1K, 10K, 50K data points):
+The comprehensive benchmark suite tests all 33 indicators across different dataset sizes (100, 1K, 10K, 50K data points):
 
 **Trend Indicators:**
 - SMA, EMA, WMA, ADX, DMI, Parabolic SAR

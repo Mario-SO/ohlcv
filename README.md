@@ -27,7 +27,7 @@ A modern Zig library for fetching and parsing Open-High-Low-Close-Volume (OHLCV)
 
 - **Time Series Management**: Efficient slicing, filtering, and operations
 
-- **37 Technical Indicators**: Complete suite including trend (SMA, EMA, ADX), momentum (RSI, MACD, Stochastic), volatility (Bollinger Bands, ATR, Keltner Channels), volume (OBV, MFI, CMF), and advanced systems (Ichimoku Cloud, Heikin Ashi)
+- **33 Technical Indicators**: Complete suite including trend (SMA, EMA, ADX), momentum (RSI, MACD, Stochastic), volatility (Bollinger Bands, ATR, Keltner Channels), volume (OBV, MFI, CMF), and advanced systems (Ichimoku Cloud, Heikin Ashi)
 
 - **Performance Testing**:
   - **NEW**: Comprehensive performance benchmarks
@@ -95,7 +95,7 @@ var series = try ohlcv.fetchPreset(.btc_usd, allocator);
 defer series.deinit();
 ```
 
-See [USAGE.md](USAGE.md) for detailed integration guide.
+See [USAGE.md](docs/USAGE.md) for detailed integration guide.
 
 ## 🚀 Usage Example
 
@@ -222,11 +222,11 @@ const result = try sma.calculateWithArena(series, &arena);
   - `MemoryPool` - Reusable memory allocation pool
   - `IndicatorArena` - Arena allocator for batch calculations
 
-- **37 Indicators**: Including trend analysis (SMA, EMA, WMA, ADX, DMI, Parabolic SAR), momentum oscillators (RSI, MACD, Stochastic, Stochastic RSI, Ultimate Oscillator, TRIX), volatility bands (Bollinger Bands, Keltner Channels, Donchian Channels, Price Channels), volume analysis (OBV, MFI, CMF, Force Index, A/D Line), and advanced systems (Ichimoku Cloud, Heikin Ashi, Pivot Points, Elder Ray, Aroon, Zig Zag)
+- **33 Indicators**: Including trend analysis (SMA, EMA, WMA, ADX, DMI, Parabolic SAR), momentum oscillators (RSI, MACD, Stochastic, Stochastic RSI, Ultimate Oscillator, TRIX), volatility bands (Bollinger Bands, Keltner Channels, Donchian Channels, Price Channels), volume analysis (OBV, MFI, CMF, Force Index, A/D Line), and advanced systems (Ichimoku Cloud, Heikin Ashi, Pivot Points, Elder Ray, Aroon, Zig Zag)
 
 - **Convenience**: `fetchPreset(source: PresetSource, allocator) !TimeSeries`
 
-For detailed usage, see [ARCHITECTURE.md](ARCHITECTURE.md)
+For detailed usage, see [USAGE.md](docs/USAGE.md)
 
 ### Errors
 
@@ -240,9 +240,12 @@ For detailed usage, see [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ```
 ohlcv/
-  - ARCHITECTURE.md
   - CLAUDE.md              # Claude Code guidance
-  - PROFILING.md           # Performance profiling guide
+  - docs/                  # Extended documentation
+    - CHANGELOG.md         # Project changelog
+    - PROFILING.md         # Performance profiling guide
+    - USAGE.md            # Detailed usage guide
+    - README.md           # Documentation index
   - build.zig
   - build.zig.zon
   - benchmark/
@@ -262,7 +265,7 @@ ohlcv/
       - file_data_source.zig
       - http_data_source.zig
       - memory_data_source.zig
-    - indicators/         # 37 technical indicators
+    - indicators/         # 33 technical indicators
       - indicator_result.zig
       - [Single-line indicators: SMA, EMA, WMA, RSI, ATR, ROC, Momentum, etc.]
       - [Multi-line indicators: MACD, Bollinger Bands, Ichimoku Cloud, etc.]
@@ -322,7 +325,7 @@ ohlcv/
 ## 📚 See Also
 
 - [demo.zig](demo.zig) — Full example usage
-- [ARCHITECTURE.md](ARCHITECTURE.md) — Detailed architecture, examples, and extension guide
+- [USAGE.md](docs/USAGE.md) — Detailed usage guide and integration examples
 - [lib/ohlcv.zig](lib/ohlcv.zig) — Public API
 
 ---

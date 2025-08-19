@@ -124,7 +124,7 @@ var stoch_result = try stoch.calculate(series, allocator);
 defer stoch_result.deinit(); // Cleans up both lines
 ```
 
-## ✅ All Indicators Now Implemented!
+## ✅ All 33 Indicators Implemented!
 
 ### Recently Added Indicators:
 

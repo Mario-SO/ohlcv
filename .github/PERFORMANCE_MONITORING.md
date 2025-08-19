@@ -37,7 +37,7 @@ This repository uses a streamlined approach to performance monitoring with just 
 - **ATR-14**: Average True Range
 
 ### Full Suite (Weekly + Manual)
-All 37 indicators including:
+All 33 indicators including:
 - **Trend**: ADX, DMI, Parabolic SAR, etc.
 - **Momentum**: Stochastic, Williams %R, TRIX, etc.
 - **Volatility**: Keltner Channels, Donchian Channels, etc.

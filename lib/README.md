@@ -6,7 +6,7 @@ The OHLCV library has been enhanced with high-performance parsing and memory man
 
 - **Decoupled data sources** - Easy to add custom data providers
 - **Efficient time series container** - Zero-copy operations where possible
-- **Clean indicator framework** - Consistent API across all 37 indicators
+- **Clean indicator framework** - Consistent API across all 33 indicators
 - **Hungarian notation** - Clear type information in variable names
 - **Performance optimizations** - Pre-allocation, SIMD-ready structures
 - **Streaming parser** - Process large datasets without full memory load
@@ -87,7 +87,7 @@ TimeSeries - Efficient container with:
 // ╚═════════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-### 6. Indicators (37 Total)
+### 6. Indicators (33 Total)
 
 ```zig
 // ╔══════════════════════════════════════ Indicators ══════════════════════════════════════╗
@@ -309,6 +309,6 @@ pub const ApiDataSource = struct {
 - `fetchPreset()` for preset data sources
 - Streaming parser for large datasets
 - Memory pooling for performance optimization
-- All 37 indicators fully implemented
+- All 33 indicators fully implemented
 
 The architecture provides maximum flexibility and performance for financial data processing.

@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🎉 Initial Release
 
 #### Features
-- **37 Technical Indicators** - Complete suite of trading indicators:
+- **33 Technical Indicators** - Complete suite of trading indicators:
   - Trend: SMA, EMA, WMA, ADX, DMI, Parabolic SAR
   - Momentum: RSI, MACD, Stochastic, Williams %R, ROC, TRIX, and more
   - Volatility: ATR, Bollinger Bands, Keltner Channels, Donchian Channels

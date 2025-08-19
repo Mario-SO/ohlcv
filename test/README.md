@@ -67,7 +67,7 @@ zig test test/unit/test_time_series.zig -I lib --dep ohlcv -Mohlcv=lib/ohlcv.zig
    - 🔄 Streaming parser for large files
 
 4. **Indicator Tests** (`test_indicators.zig`)
-   - ✅ **All 37 Indicators fully tested**:
+   - ✅ **All 33 Indicators fully tested**:
      - **Trend**: SMA, EMA, WMA, ADX, DMI, Parabolic SAR
      - **Momentum**: RSI, MACD, Stochastic, Stochastic RSI, Ultimate Oscillator, TRIX, ROC, Momentum, Williams %R
      - **Volatility**: ATR, Bollinger Bands, Keltner Channels, Donchian Channels, Price Channels

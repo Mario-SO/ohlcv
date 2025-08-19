@@ -269,7 +269,7 @@ defer allocator.free(data);
 
 ## Available Indicators
 
-The library provides 37 technical indicators:
+The library provides 33 technical indicators:
 
 ### Trend Indicators
 - `SmaIndicator` - Simple Moving Average
