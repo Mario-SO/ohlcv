@@ -1,3 +1,5 @@
+# ⚠️ NOT READY FOR v0.15.1
+
 # 📊 OHLCV Zig Library
 
 [![CI](https://github.com/Mario-SO/ohlcv/actions/workflows/ci.yml/badge.svg)](https://github.com/Mario-SO/ohlcv/actions/workflows/ci.yml)
