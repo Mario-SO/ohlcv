@@ -41,3 +41,5 @@ build-*/
 docgen_tmp/
 
 profiling_results/
+
+TAG_RELEASE_GUIDE.md
