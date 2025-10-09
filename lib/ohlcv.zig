@@ -31,7 +31,7 @@ pub const IndicatorArena = @import("utils/memory_pool.zig").IndicatorArena;
 
 // └───────────────────────────────────────────────────────────────────────────────────────────────┘
 
-// ┌─────────────────────────────────────────────── Parser ────────────────────────────────────────────┐
+// ┌───────────────────────────────────────────── Parser ──────────────────────────────────────────┐
 
 pub const CsvParser = @import("parser/csv_parser.zig").CsvParser;
 pub const StreamingCsvParser = @import("parser/streaming_csv_parser.zig").StreamingCsvParser;
