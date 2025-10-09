@@ -42,12 +42,17 @@ pub const HttpDataSource = struct {
         var response_body = ArrayList(u8).init(allocator);
         errdefer response_body.deinit();
 
+        var writer = response_body.writer();
+        var writer_buffer: [4096]u8 = undefined;
+        var writer_adapter = writer.adaptToNewApi(writer_buffer[0..]);
+
         const response = try client.fetch(.{
             .location = .{ .url = self.str_url },
-            .response_storage = .{ .dynamic = &response_body },
+            .response_writer = &writer_adapter.new_interface,
         });
 
         _ = response;
+        if (writer_adapter.err) |err| return err;
         return try response_body.toOwnedSlice();
     }
 
