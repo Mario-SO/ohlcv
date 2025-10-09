@@ -11,14 +11,21 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    // Optional: build a static library artifact for consumers who prefer linking
-    // (module-based import remains the primary integration method)
-    const lib = b.addStaticLibrary(.{
-        .name = "ohlcv",
-        .root_source_file = b.path("lib/ohlcv.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
+    // Optional static library artifact; support both addStaticLibrary (<=0.14) and addLibrary (>=0.15)
+    const lib = if (@hasDecl(std.Build, "addStaticLibrary")) blk: {
+        break :blk b.addStaticLibrary(.{
+            .name = "ohlcv",
+            .root_source_file = b.path("lib/ohlcv.zig"),
+            .target = target,
+            .optimize = optimize,
+        });
+    } else blk: {
+        break :blk b.addLibrary(.{
+            .name = "ohlcv",
+            .root_module = mod,
+            .linkage = .static,
+        });
+    };
     b.installArtifact(lib);
 
     // ─── Unit‑tests (compile + run) ───
