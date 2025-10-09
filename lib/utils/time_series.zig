@@ -3,6 +3,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const OhlcvRow = @import("../types/ohlcv_row.zig").OhlcvRow;
+const ArrayList = std.array_list.Managed;
 
 /// Efficient container for time series data with zero-copy operations where possible
 pub const TimeSeries = struct {
@@ -94,7 +95,7 @@ pub const TimeSeries = struct {
 
     /// Filter rows based on predicate (allocates new array)
     pub fn filter(self: Self, comptime predicate: fn (row: OhlcvRow) bool) !Self {
-        var filtered = std.ArrayList(OhlcvRow).init(self.allocator);
+        var filtered = ArrayList(OhlcvRow).init(self.allocator);
         errdefer filtered.deinit();
 
         for (self.arr_rows) |row| {

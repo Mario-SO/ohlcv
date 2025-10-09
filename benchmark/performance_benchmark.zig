@@ -3,9 +3,10 @@
 const std = @import("std");
 const ohlcv = @import("ohlcv");
 const print = std.debug.print;
+const ArrayList = std.array_list.Managed;
 
 fn generateCsvData(allocator: std.mem.Allocator, rows: usize) ![]u8 {
-    var buffer = std.ArrayList(u8).init(allocator);
+    var buffer = ArrayList(u8).init(allocator);
     errdefer buffer.deinit();
 
     try buffer.appendSlice("Date,Open,High,Low,Close,Volume\n");

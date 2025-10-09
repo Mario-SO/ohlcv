@@ -2,6 +2,7 @@
 
 const std = @import("std");
 const ohlcv = @import("ohlcv");
+const ArrayList = std.array_list.Managed;
 
 /// Create sample OHLCV rows for testing
 pub fn createSampleRows(allocator: std.mem.Allocator, count: usize) ![]ohlcv.OhlcvRow {
@@ -42,7 +43,7 @@ pub fn floatEquals(a: f64, b: f64, tolerance: f64) bool {
 
 /// Generate CSV string from rows
 pub fn rowsToCsv(allocator: std.mem.Allocator, rows: []const ohlcv.OhlcvRow) ![]u8 {
-    var buffer = std.ArrayList(u8).init(allocator);
+    var buffer = ArrayList(u8).init(allocator);
     var writer = buffer.writer();
 
     // Write header

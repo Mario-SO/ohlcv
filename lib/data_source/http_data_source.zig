@@ -3,6 +3,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const DataSource = @import("data_source.zig").DataSource;
+const ArrayList = std.array_list.Managed;
 
 pub const HttpDataSource = struct {
     const Self = @This();
@@ -38,7 +39,7 @@ pub const HttpDataSource = struct {
         var client = std.http.Client{ .allocator = allocator };
         defer client.deinit();
 
-        var response_body = std.ArrayList(u8).init(allocator);
+        var response_body = ArrayList(u8).init(allocator);
         errdefer response_body.deinit();
 
         const response = try client.fetch(.{

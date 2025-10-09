@@ -595,7 +595,7 @@ fn calculateAndPrintAccumulationDistribution(series: *ohlcv.TimeSeries, allocato
 
 /// Calculate and print Stochastic RSI
 fn calculateAndPrintStochasticRSI(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype, rsi_period: u32, stoch_period: u32) !void {
-    const stoch_rsi = ohlcv.StochasticRsiIndicator{ 
+    const stoch_rsi = ohlcv.StochasticRsiIndicator{
         .u32_rsi_period = rsi_period,
         .u32_stochastic_period = stoch_period,
     };
@@ -628,7 +628,7 @@ fn calculateAndPrintUltimateOscillator(series: *ohlcv.TimeSeries, allocator: std
 
 /// Calculate and print Keltner Channels
 fn calculateAndPrintKeltnerChannels(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator, writer: anytype, ema_period: u32, atr_period: u32) !void {
-    const kc = ohlcv.KeltnerChannelsIndicator{ 
+    const kc = ohlcv.KeltnerChannelsIndicator{
         .u32_ema_period = ema_period,
         .u32_atr_period = atr_period,
     };
@@ -641,13 +641,13 @@ fn calculateAndPrintKeltnerChannels(series: *ohlcv.TimeSeries, allocator: std.me
 
     try writer.print("Keltner Channels Results:\n", .{});
     try writer.print("─────────────────────────────────\n", .{});
-    
+
     const len = result.middle_line.len();
     const start = if (len > 5) len - 5 else 0;
-    
+
     try writer.print("Timestamp         | Upper     | Middle    | Lower\n", .{});
     try writer.print("──────────────────┼───────────┼───────────┼───────────\n", .{});
-    
+
     var i = start;
     while (i < len) : (i += 1) {
         try writer.print("{d:17} │ {d:9.2} │ {d:9.2} │ {d:9.2}\n", .{
@@ -672,13 +672,13 @@ fn calculateAndPrintPivotPoints(series: *ohlcv.TimeSeries, allocator: std.mem.Al
 
     try writer.print("Pivot Points Results:\n", .{});
     try writer.print("─────────────────────────────────\n", .{});
-    
+
     const len = result.pivot_point.len();
     const start = if (len > 5) len - 5 else 0;
-    
+
     try writer.print("Timestamp         | Pivot     | R1        | R2        | S1        | S2\n", .{});
     try writer.print("──────────────────┼───────────┼───────────┼───────────┼───────────┼───────────\n", .{});
-    
+
     var i = start;
     while (i < len) : (i += 1) {
         try writer.print("{d:17} │ {d:9.2} │ {d:9.2} │ {d:9.2} │ {d:9.2} │ {d:9.2}\n", .{
@@ -705,13 +705,13 @@ fn calculateAndPrintPriceChannels(series: *ohlcv.TimeSeries, allocator: std.mem.
 
     try writer.print("Price Channels({d}) Results:\n", .{period});
     try writer.print("─────────────────────────────────\n", .{});
-    
+
     const len = result.middle_channel.len();
     const start = if (len > 5) len - 5 else 0;
-    
+
     try writer.print("Timestamp         | Upper     | Middle    | Lower\n", .{});
     try writer.print("──────────────────┼───────────┼───────────┼───────────\n", .{});
-    
+
     var i = start;
     while (i < len) : (i += 1) {
         try writer.print("{d:17} │ {d:9.2} │ {d:9.2} │ {d:9.2}\n", .{
@@ -736,13 +736,13 @@ fn calculateAndPrintElderRay(series: *ohlcv.TimeSeries, allocator: std.mem.Alloc
 
     try writer.print("Elder Ray({d}) Results:\n", .{period});
     try writer.print("─────────────────────────────────\n", .{});
-    
+
     const len = result.bull_power.len();
     const start = if (len > 5) len - 5 else 0;
-    
+
     try writer.print("Timestamp         | Bull Power | Bear Power\n", .{});
     try writer.print("──────────────────┼────────────┼────────────\n", .{});
-    
+
     var i = start;
     while (i < len) : (i += 1) {
         try writer.print("{d:17} │ {d:10.2} │ {d:10.2}\n", .{
@@ -766,7 +766,7 @@ fn calculateAndPrintZigZag(series: *ohlcv.TimeSeries, allocator: std.mem.Allocat
 
     try writer.print("Zig Zag({d}%) Results (reversal points only):\n", .{threshold});
     try writer.print("─────────────────────────────────\n", .{});
-    
+
     // Only show non-NaN values
     var count: usize = 0;
     for (result.arr_values, result.arr_timestamps) |value, timestamp| {
@@ -791,13 +791,13 @@ fn calculateAndPrintDMI(series: *ohlcv.TimeSeries, allocator: std.mem.Allocator,
 
     try writer.print("DMI({d}) Results:\n", .{period});
     try writer.print("─────────────────────────────────\n", .{});
-    
+
     const len = result.adx.len();
     const start = if (len > 5) len - 5 else 0;
-    
+
     try writer.print("Timestamp         | +DI       | -DI       | ADX\n", .{});
     try writer.print("──────────────────┼───────────┼───────────┼───────────\n", .{});
-    
+
     var i = start;
     while (i < len) : (i += 1) {
         try writer.print("{d:17} │ {d:9.2} │ {d:9.2} │ {d:9.2}\n", .{
@@ -822,11 +822,11 @@ fn calculateAndPrintIchimokuCloud(series: *ohlcv.TimeSeries, allocator: std.mem.
 
     try writer.print("Ichimoku Cloud Results:\n", .{});
     try writer.print("─────────────────────────────────\n", .{});
-    
+
     // Show last 3 values for each component
     const len = result.tenkan_sen.len();
     const start = if (len > 3) len - 3 else 0;
-    
+
     try writer.print("Component | ", .{});
     var i = start;
     while (i < len) : (i += 1) {
@@ -839,7 +839,7 @@ fn calculateAndPrintIchimokuCloud(series: *ohlcv.TimeSeries, allocator: std.mem.
         try writer.print("───────────────┼", .{});
     }
     try writer.print("\n", .{});
-    
+
     // Tenkan-sen
     try writer.print("Tenkan    │ ", .{});
     i = start;
@@ -847,7 +847,7 @@ fn calculateAndPrintIchimokuCloud(series: *ohlcv.TimeSeries, allocator: std.mem.
         try writer.print("{d:13.2} │ ", .{result.tenkan_sen.arr_values[i]});
     }
     try writer.print("\n", .{});
-    
+
     // Kijun-sen
     try writer.print("Kijun     │ ", .{});
     i = start;
@@ -859,7 +859,7 @@ fn calculateAndPrintIchimokuCloud(series: *ohlcv.TimeSeries, allocator: std.mem.
         }
     }
     try writer.print("\n", .{});
-    
+
     try writer.print("\n", .{});
 }
 
@@ -875,13 +875,13 @@ fn calculateAndPrintHeikinAshi(series: *ohlcv.TimeSeries, allocator: std.mem.All
 
     try writer.print("Heikin Ashi Candles Results:\n", .{});
     try writer.print("─────────────────────────────────\n", .{});
-    
+
     const len = result.ha_open.len();
     const start = if (len > 5) len - 5 else 0;
-    
+
     try writer.print("Timestamp         | HA-Open   | HA-High   | HA-Low    | HA-Close\n", .{});
     try writer.print("──────────────────┼───────────┼───────────┼───────────┼───────────\n", .{});
-    
+
     var i = start;
     while (i < len) : (i += 1) {
         try writer.print("{d:17} │ {d:9.2} │ {d:9.2} │ {d:9.2} │ {d:9.2}\n", .{
@@ -900,7 +900,10 @@ pub fn main() !void {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    const stdout_writer = std.io.getStdOut().writer();
+    var stdout_buffer: [4096]u8 = undefined;
+    var stdout_file_writer = std.fs.File.stdout().writer(stdout_buffer[0..]);
+    const stdout_writer = &stdout_file_writer.interface;
+    defer stdout_writer.flush() catch {};
 
     try stdout_writer.print("╔══════════════════════════════════════════╗\n", .{});
     try stdout_writer.print("║        OHLCV Library Demo v2.0           ║\n", .{});
@@ -913,8 +916,8 @@ pub fn main() !void {
 
     for (datasets) |dataset| {
         runAnalysis(allocator, stdout_writer, dataset, config) catch |err| {
-            // Handle broken pipe gracefully (common in CI when piping to head)
-            if (err == error.BrokenPipe) {
+            // Handle broken pipe / closed stdout gracefully (common in CI when piping to head)
+            if (err == std.Io.Writer.Error.WriteFailed) {
                 return;
             }
             return err;
@@ -923,15 +926,15 @@ pub fn main() !void {
 
     // Demonstrate custom data source
     stdout_writer.print("\n══════════════════════════════════════════\n", .{}) catch |err| {
-        if (err == error.BrokenPipe) return;
+        if (err == std.Io.Writer.Error.WriteFailed) return;
         return err;
     };
     stdout_writer.print("Custom Data Source Example\n", .{}) catch |err| {
-        if (err == error.BrokenPipe) return;
+        if (err == std.Io.Writer.Error.WriteFailed) return;
         return err;
     };
     stdout_writer.print("══════════════════════════════════════════\n\n", .{}) catch |err| {
-        if (err == error.BrokenPipe) return;
+        if (err == std.Io.Writer.Error.WriteFailed) return;
         return err;
     };
 
@@ -955,14 +958,14 @@ pub fn main() !void {
     defer custom_series.deinit();
 
     stdout_writer.print("Parsed {d} rows from custom data\n", .{custom_series.len()}) catch |err| {
-        if (err == error.BrokenPipe) return;
+        if (err == std.Io.Writer.Error.WriteFailed) return;
         return err;
     };
     stdout_writer.print("First row: timestamp={d}, close={d:.2}\n", .{
         custom_series.arr_rows[0].u64_timestamp,
         custom_series.arr_rows[0].f64_close,
     }) catch |err| {
-        if (err == error.BrokenPipe) return;
+        if (err == std.Io.Writer.Error.WriteFailed) return;
         return err;
     };
 }

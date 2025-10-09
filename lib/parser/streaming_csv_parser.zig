@@ -5,6 +5,7 @@ const Allocator = std.mem.Allocator;
 const OhlcvRow = @import("../types/ohlcv_row.zig").OhlcvRow;
 const TimeSeries = @import("../utils/time_series.zig").TimeSeries;
 const date = @import("../utils/date.zig");
+const ArrayList = std.array_list.Managed;
 
 // ┌──────────────────────────────────────────── Error ────────────────────────────────────────────┐
 
@@ -34,7 +35,7 @@ pub const StreamingCsvParser = struct {
     buffer: []u8,
     buffer_pos: usize = 0,
     buffer_end: usize = 0,
-    line_buffer: std.ArrayList(u8),
+    line_buffer: ArrayList(u8),
     header_skipped: bool = false,
     stream_ended: bool = false,
 
@@ -47,7 +48,7 @@ pub const StreamingCsvParser = struct {
         const buffer = try allocator.alloc(u8, BUFFER_SIZE);
         errdefer allocator.free(buffer);
 
-        var line_buffer = std.ArrayList(u8).init(allocator);
+        var line_buffer = ArrayList(u8).init(allocator);
         errdefer line_buffer.deinit();
         try line_buffer.ensureTotalCapacity(256); // Pre-allocate for typical line size
 
@@ -175,7 +176,7 @@ pub const StreamingCsvParser = struct {
 
     /// Parse all data at once (backward compatible with original parser)
     pub fn parse(self: *Self, data: []const u8) !TimeSeries {
-        var rows = std.ArrayList(OhlcvRow).init(self.allocator);
+        var rows = ArrayList(OhlcvRow).init(self.allocator);
         errdefer rows.deinit();
 
         // Feed all data at once
