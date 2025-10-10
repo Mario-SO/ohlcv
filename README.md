@@ -103,7 +103,7 @@ See [USAGE.md](docs/USAGE.md) for detailed integration guide.
 
 ```zig
 const std = @import("std");
-const ohlcv = @import("lib/ohlcv.zig");
+const ohlcv = @import("ohlcv");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
