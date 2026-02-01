@@ -2,7 +2,6 @@
 
 # 📊 OHLCV Zig Library
 
-[![CI](https://github.com/Mario-SO/ohlcv/actions/workflows/ci.yml/badge.svg)](https://github.com/Mario-SO/ohlcv/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Zig Version](https://img.shields.io/badge/Zig-0.15.0+-orange.svg)](https://ziglang.org/)
 
